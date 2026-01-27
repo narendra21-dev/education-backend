@@ -1,1 +1,1 @@
-web: gunicorn education_backend.wsgi:application
+web: gunicorn config.wsgi:application
