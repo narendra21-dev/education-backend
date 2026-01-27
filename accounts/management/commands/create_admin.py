@@ -11,10 +11,11 @@ class Command(BaseCommand):
     def handle(self, *args, **kwargs):
         email = config("DJANGO_SUPERUSER_EMAIL")
         password = config("DJANGO_SUPERUSER_PASSWORD")
+        username = email.split("@")[0]  # generates "naren" from "naren@gmail.com"
 
         # delete old admin if exists
         User.objects.filter(email=email).delete()
 
-        User.objects.create_superuser(email=email, password=password)
+        User.objects.create_superuser(username=username, email=email, password=password)
 
         self.stdout.write(self.style.SUCCESS("Admin user created / updated"))
