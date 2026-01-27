@@ -12,10 +12,9 @@ class Command(BaseCommand):
         email = config("DJANGO_SUPERUSER_EMAIL")
         password = config("DJANGO_SUPERUSER_PASSWORD")
 
-        if User.objects.filter(email=email).exists():
-            self.stdout.write(self.style.WARNING("Admin already exists"))
-            return
+        # delete old admin if exists
+        User.objects.filter(email=email).delete()
 
         User.objects.create_superuser(email=email, password=password)
 
-        self.stdout.write(self.style.SUCCESS("Admin user created"))
+        self.stdout.write(self.style.SUCCESS("Admin user created / updated"))
