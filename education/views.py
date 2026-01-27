@@ -2,6 +2,7 @@
 
 # from rest_framework.views import APIView
 # from education.services import create_units_for_course
+from django.shortcuts import render
 from education.permissions import IsTeacherOrReadOnly
 from rest_framework.viewsets import ModelViewSet
 from rest_framework.response import Response
@@ -84,6 +85,12 @@ class QuestionViewSet(ModelViewSet):
 
     def perform_create(self, serializer):
         serializer.save(created_by=self.request.user)
+
+
+def test_static_media(request):
+    # Example media image URL (from DB or static path)
+    media_image = "/media/universities/iii_GyXZ7Gt.png"
+    return render(request, "test_static_media.html", {"media_image": media_image})
 
 
 # # Course → filter by university

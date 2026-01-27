@@ -4,20 +4,37 @@ from django.utils import timezone
 from rest_framework import serializers
 from .models import EmailOTP, User
 from .utils import generate_otp, send_otp_email
+from django.contrib.auth import get_user_model
+from django.contrib.auth.password_validation import validate_password
+
+
+User = get_user_model()
 
 
 class RegisterSerializer(serializers.ModelSerializer):
-    password = serializers.CharField(write_only=True)
+    # password = serializers.CharField(write_only=True)
+    password = serializers.CharField(
+        write_only=True, required=True, validators=[validate_password]
+    )
 
     class Meta:
         model = User
         fields = ("email", "username", "password")
+
+    # def create(self, validated_data):
+    #     user = User.objects.create_user(
+    #         email=validated_data["email"],
+    #         username=validated_data["username"],
+    #         password=validated_data["password"],
+    #         is_active=False,  # important
+    #     )
 
     def create(self, validated_data):
         user = User.objects.create_user(
             email=validated_data["email"],
             username=validated_data["username"],
             password=validated_data["password"],
+            role=validated_data.get("role", "student"),
             is_active=False,  # important
         )
 

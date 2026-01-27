@@ -7,6 +7,7 @@ from .views import (
     QuestionViewSet,
     UnitViewSet,
     UniversityViewSet,
+    test_static_media,
 )
 from rest_framework.routers import DefaultRouter
 
@@ -24,3 +25,7 @@ router.register("notes", NoteViewSet)
 router.register("questions", QuestionViewSet)
 
 urlpatterns = router.urls
+
+urlpatterns += [
+    path("test-static-media/", test_static_media, name="test-static-media"),
+]

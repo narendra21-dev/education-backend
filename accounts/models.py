@@ -20,6 +20,18 @@ class User(AbstractUser):
     USERNAME_FIELD = "email"
     REQUIRED_FIELDS = ["username"]
 
+    # ✅ ADD THIS METHOD
+    def save(self, *args, **kwargs):
+        if self.role == "teacher":
+            self.is_staff = True
+            self.is_superuser = False
+
+        else:  # student
+            self.is_staff = False
+            self.is_superuser = False
+
+        super().save(*args, **kwargs)
+
     def __str__(self):
         return self.email
 

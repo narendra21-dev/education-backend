@@ -1,0 +1,1 @@
+web: gunicorn education_backend.wsgi:application
