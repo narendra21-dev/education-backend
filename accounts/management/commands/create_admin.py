@@ -6,16 +6,22 @@ User = get_user_model()
 
 
 class Command(BaseCommand):
-    help = "Create default admin user"
+    help = "Create or update default admin user"
 
     def handle(self, *args, **kwargs):
         email = config("DJANGO_SUPERUSER_EMAIL")
         password = config("DJANGO_SUPERUSER_PASSWORD")
-        username = email.split("@")[0]  # generates "naren" from "naren@gmail.com"
 
-        # delete old admin if exists
-        User.objects.filter(email=email).delete()
+        user, created = User.objects.get_or_create(
+            email=email,
+            defaults={"is_staff": True, "is_superuser": True}
+        )
 
-        User.objects.create_superuser(username=username, email=email, password=password)
+        user.is_staff = True
+        user.is_superuser = True
+        user.set_password(password)
+        user.save()
 
-        self.stdout.write(self.style.SUCCESS("Admin user created / updated"))
+        self.stdout.write(
+            self.style.SUCCESS("Admin user created / updated successfully")
+        )
