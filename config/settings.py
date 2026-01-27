@@ -33,7 +33,24 @@ BASE_DIR = Path(__file__).resolve().parent.parent
 
 SECRET_KEY = config("SECRET_KEY")
 DEBUG = config("DEBUG", cast=bool)
-ALLOWED_HOSTS = config("ALLOWED_HOSTS").split(",")
+# ALLOWED_HOSTS = config("ALLOWED_HOSTS").split(",")
+# ALLOWED_HOSTS = config("ALLOWED_HOSTS", default="*").split(",")
+# Get ALLOWED_HOSTS from .env
+raw_allowed_hosts = config("ALLOWED_HOSTS", default="*")
+
+# If * is set, allow all hosts; otherwise split by comma
+if raw_allowed_hosts.strip() == "*":
+    ALLOWED_HOSTS = ["*"]
+else:
+    ALLOWED_HOSTS = [host.strip() for host in raw_allowed_hosts.split(",")]
+# Read ALLOWED_HOSTS from .env
+# raw_allowed_hosts = config("ALLOWED_HOSTS", default="*")
+
+# if raw_allowed_hosts == "*":
+#     ALLOWED_HOSTS = ["*"]
+# else:
+#     # Split comma-separated values into a list
+#     ALLOWED_HOSTS = [host.strip() for host in raw_allowed_hosts.split(",")]
 
 
 # Application definition
