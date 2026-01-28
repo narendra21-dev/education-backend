@@ -78,6 +78,7 @@ class CustomUserAdmin(UserAdmin):
     model = User
 
     list_display = (
+        "id",
         "email",
         "username",
         "role",
