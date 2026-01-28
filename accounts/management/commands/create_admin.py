@@ -14,12 +14,17 @@ class Command(BaseCommand):
 
         user, created = User.objects.get_or_create(
             email=email,
-            defaults={"is_staff": True, "is_superuser": True}
+            defaults={
+                "is_staff": True,
+                "is_superuser": True,
+                "is_active": True,
+            },
         )
 
+        user.set_password(password)
         user.is_staff = True
         user.is_superuser = True
-        user.set_password(password)
+        user.is_active = True
         user.save()
 
         self.stdout.write(
