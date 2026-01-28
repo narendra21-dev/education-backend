@@ -156,3 +156,10 @@ class ResetPasswordSerializer(serializers.Serializer):
 
         # Optional: cleanup OTPs
         EmailOTP.objects.filter(user=user, purpose="reset_password").delete()
+
+
+class ProfileSerializer(serializers.ModelSerializer):
+    class Meta:
+        model = User
+        fields = ("email", "username", "profile_image", "role")
+        read_only_fields = ("email", "role")

@@ -8,6 +8,7 @@ from .serializers import (
     ForgotPasswordRequestSerializer,
     ForgotPasswordVerifyOTPSerializer,
     LoginSerializer,
+    ProfileSerializer,
     RegisterSerializer,
     ResetPasswordSerializer,
 )
@@ -102,7 +103,6 @@ class TestProtectedView(APIView):
         return Response({"message": "JWT working", "user": request.user.email})
 
 
-
 class ForgotPasswordRequestView(APIView):
     def post(self, request):
         serializer = ForgotPasswordRequestSerializer(data=request.data)
@@ -113,7 +113,6 @@ class ForgotPasswordRequestView(APIView):
         )
 
 
-
 class ForgotPasswordVerifyOTPView(APIView):
     def post(self, request):
         serializer = ForgotPasswordVerifyOTPSerializer(data=request.data)
@@ -122,7 +121,6 @@ class ForgotPasswordVerifyOTPView(APIView):
             {"message": "OTP verified successfully"},
             status=status.HTTP_200_OK,
         )
-
 
 
 class ResetPasswordView(APIView):
@@ -143,4 +141,20 @@ class ResetPasswordView(APIView):
         return Response(
             {"message": "Password reset successful"},
             status=status.HTTP_200_OK,
+        )
+
+
+class ProfileView(APIView):
+    permission_classes = [IsAuthenticated]
+
+    def get(self, request):
+        serializer = ProfileSerializer(request.user)
+        return Response(serializer.data)
+
+    def patch(self, request):
+        serializer = ProfileSerializer(request.user, data=request.data, partial=True)
+        serializer.is_valid(raise_exception=True)
+        serializer.save()
+        return Response(
+            {"message": "Profile updated successfully", "user": serializer.data}
         )
