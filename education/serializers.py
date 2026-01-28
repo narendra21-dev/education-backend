@@ -4,10 +4,17 @@ from .models import Book, Chapter, Note, Question, Unit, University, Course
 
 class UniversitySerializer(serializers.ModelSerializer):
     course_count = serializers.IntegerField(source="courses.count", read_only=True)
+    image = serializers.SerializerMethodField()
 
     class Meta:
         model = University
         fields = "__all__"
+
+    def get_image(self, obj):
+        if obj.image:
+            # Cloudinary returns full URL when using django-cloudinary-storage
+            return obj.image.url
+        return None
 
 
 class CourseSerializer(serializers.ModelSerializer):
