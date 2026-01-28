@@ -67,19 +67,6 @@ class Book(models.Model):
     def __str__(self):
         return f"{self.name} - {self.course.name}"
 
-    course = models.ForeignKey(Course, on_delete=models.CASCADE, related_name="books")
-    name = models.CharField(max_length=150)
-    description = models.TextField(blank=True)
-    cover_image = models.ImageField(upload_to="books/", null=True, blank=True)
-    created_at = models.DateTimeField(auto_now_add=True)
-
-    class Meta:
-        unique_together = ("course", "name")
-        ordering = ["name"]
-
-    def __str__(self):
-        return f"{self.name} - {self.course.name}"
-
 
 class Unit(models.Model):
     book = models.ForeignKey(Book, on_delete=models.CASCADE, related_name="units")
