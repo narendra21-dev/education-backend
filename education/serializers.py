@@ -4,10 +4,12 @@ from .models import Book, Chapter, Note, Question, Unit, University, Course
 
 class UniversitySerializer(serializers.ModelSerializer):
     course_count = serializers.IntegerField(source="courses.count", read_only=True)
+    image = serializers.ImageField()  # DRF automatically uses storage backend
 
     class Meta:
         model = University
-        fields = "__all__"
+        fields = ("id", "name", "description", "image", "course_count", "created_at")
+        # fields = "__all__"
 
 
 class CourseSerializer(serializers.ModelSerializer):
