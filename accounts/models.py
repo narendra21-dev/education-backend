@@ -21,14 +21,26 @@ class User(AbstractUser):
     REQUIRED_FIELDS = ["username"]
 
     # ✅ ADD THIS METHOD
-    def save(self, *args, **kwargs):
-        if self.role == "teacher":
-            self.is_staff = True
-            self.is_superuser = False
+    # def save(self, *args, **kwargs):
+    #     if self.role == "teacher":
+    #         self.is_staff = True
+    #         self.is_superuser = False
 
-        else:  # student
-            self.is_staff = False
-            self.is_superuser = False
+    #     else:  # student
+    #         self.is_staff = False
+    #         self.is_superuser = False
+
+    #     super().save(*args, **kwargs)
+    def save(self, *args, **kwargs):
+        # Do NOT override superusers
+        if self.is_superuser:
+            self.is_staff = True
+            self.role = "teacher"
+        else:
+            if self.role == "teacher":
+                self.is_staff = True
+            else:
+                self.is_staff = False
 
         super().save(*args, **kwargs)
 
