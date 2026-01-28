@@ -220,11 +220,7 @@ cloudinary.config(
     api_secret=config("CLOUDINARY_API_SECRET"),
     secure=True,
 )
-print("CLOUD NAME =>", config("CLOUDINARY_CLOUD_NAME"))
-
-# if not DEBUG:  # production
-#     DEFAULT_FILE_STORAGE = "cloudinary_storage.storage.MediaCloudinaryStorage"
-# DEFAULT_FILE_STORAGE = "cloudinary_storage.storage.MediaCloudinaryStorage"
+# print("CLOUD NAME =>", config("CLOUDINARY_CLOUD_NAME"))
 
 # MEDIA_URL = "/media/"
 # MEDIA_ROOT = os.path.join(BASE_DIR, "media")

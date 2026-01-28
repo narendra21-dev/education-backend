@@ -50,9 +50,19 @@ class CourseAdmin(admin.ModelAdmin):
 # -----------------------
 @admin.register(Book)
 class BookAdmin(admin.ModelAdmin):
-    list_display = ["id", "name", "course", "created_at"]
+    list_display = ["id", "name", "course", "preview_image", "created_at"]
     search_fields = ["name", "course__name"]
     list_filter = ["course"]
+
+    def preview_image(self, obj):
+        if obj.cover_image:  # works for CloudinaryField or ImageField
+            return format_html(
+                '<img src="{}" width="60" height="60" style="border-radius:6px;" />',
+                obj.cover_image.url,
+            )
+        return "No Image"
+
+    preview_image.short_description = "Cover"
 
 
 # -----------------------

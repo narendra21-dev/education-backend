@@ -70,6 +70,7 @@ from .models import EmailOTP, User
 from django.contrib import admin
 from django.contrib.auth.admin import UserAdmin
 from .models import User, EmailOTP
+from django.utils.html import format_html
 
 
 @admin.register(User)
@@ -80,6 +81,7 @@ class CustomUserAdmin(UserAdmin):
         "email",
         "username",
         "role",
+        "profile_preview",  # NEW
         "is_staff",
         "is_active",
     )
@@ -127,18 +129,15 @@ class CustomUserAdmin(UserAdmin):
         ),
     )
 
+    def profile_preview(self, obj):
+        if obj.profile_image:
+            return format_html(
+                '<img src="{}" width="40" height="40" style="border-radius:50%;" />',
+                obj.profile_image.url,
+            )
+        return "No Image"
 
-# @admin.register(EmailOTP)
-# class EmailOTPAdmin(admin.ModelAdmin):
-#     list_display = (
-#         "user",
-#         "otp",
-#         "is_verified",
-#         "created_at",
-#     )
-#     list_filter = ("is_verified", "created_at")
-#     search_fields = ("user__email",)
-#     readonly_fields = ("created_at",)
+    profile_preview.short_description = "Profile"
 
 
 @admin.register(EmailOTP)

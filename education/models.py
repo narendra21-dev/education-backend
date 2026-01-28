@@ -57,7 +57,9 @@ class Book(models.Model):
     course = models.ForeignKey(Course, on_delete=models.CASCADE, related_name="books")
     name = models.CharField(max_length=150)
     description = models.TextField(blank=True)
-    cover_image = models.ImageField(upload_to="books/", null=True, blank=True)
+    cover_image = CloudinaryField(
+        "image", folder="books", blank=True, null=True
+    )  # changed
     created_at = models.DateTimeField(auto_now_add=True)
 
     class Meta:

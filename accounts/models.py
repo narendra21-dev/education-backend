@@ -5,6 +5,7 @@ from django.db import models
 from django.contrib.auth.models import AbstractUser
 from django.conf import settings
 from django.utils import timezone
+from cloudinary.models import CloudinaryField
 
 
 class User(AbstractUser):
@@ -14,23 +15,12 @@ class User(AbstractUser):
     )
 
     email = models.EmailField(unique=True)
-    profile_image = models.ImageField(upload_to="profiles/", null=True, blank=True)
+    profile_image = CloudinaryField("image", folder="profiles", blank=True, null=True)
     role = models.CharField(max_length=10, choices=ROLE_CHOICES, default="student")
 
     USERNAME_FIELD = "email"
     REQUIRED_FIELDS = ["username"]
 
-    # ✅ ADD THIS METHOD
-    # def save(self, *args, **kwargs):
-    #     if self.role == "teacher":
-    #         self.is_staff = True
-    #         self.is_superuser = False
-
-    #     else:  # student
-    #         self.is_staff = False
-    #         self.is_superuser = False
-
-    #     super().save(*args, **kwargs)
     def save(self, *args, **kwargs):
         # Do NOT override superusers
         if self.is_superuser:

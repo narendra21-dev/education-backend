@@ -21,20 +21,11 @@ class RegisterSerializer(serializers.ModelSerializer):
         model = User
         fields = ("email", "username", "password")
 
-    # def create(self, validated_data):
-    #     user = User.objects.create_user(
-    #         email=validated_data["email"],
-    #         username=validated_data["username"],
-    #         password=validated_data["password"],
-    #         is_active=False,  # important
-    #     )
-
     def create(self, validated_data):
         user = User.objects.create_user(
             email=validated_data["email"],
             username=validated_data["username"],
             password=validated_data["password"],
-            # role=validated_data.get("role", "student"),
             role="student",  # FORCE STUDENT
             is_active=False,  # important
         )
