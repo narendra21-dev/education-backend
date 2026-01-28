@@ -9,16 +9,18 @@ class Command(BaseCommand):
     help = "Create or update default admin user"
 
     def handle(self, *args, **kwargs):
-        email = config("DJANGO_SUPERUSER_EMAIL")
-        password = config("DJANGO_SUPERUSER_PASSWORD")
+        email = config("DJANGO_SUPERUSER_EMAIL", default=None)
+        password = config("DJANGO_SUPERUSER_PASSWORD", default=None)
+
+        if not email or not password:
+            self.stdout.write(
+                self.style.ERROR("Admin credentials not found in environment variables")
+            )
+            return
 
         user, created = User.objects.get_or_create(
             email=email,
-            defaults={
-                "is_staff": True,
-                "is_superuser": True,
-                "is_active": True,
-            },
+            defaults={"username": "admin"},
         )
 
         user.set_password(password)
