@@ -7,7 +7,7 @@ from .models import Book, Chapter, Course, Note, Question, Unit, University
 
 @admin.register(University)
 class UniversityAdmin(admin.ModelAdmin):
-    list_display = ("id", "name", "description", "image", "course_count", "created_at")
+    list_display = ("name", "created_at")
     search_fields = ("name",)
 
 
