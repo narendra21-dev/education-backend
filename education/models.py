@@ -1,12 +1,14 @@
 from django.conf import settings
 from django.db import models
+from cloudinary.models import CloudinaryField
 
 
 # Create your models here.
 class University(models.Model):
     name = models.CharField(max_length=255, unique=True)
     description = models.TextField(blank=True)
-    image = models.ImageField(upload_to="universities/", null=True, blank=True)
+    image = CloudinaryField("image", folder="universities", blank=True, null=True)
+    # image = models.ImageField(upload_to="universities/", null=True, blank=True)
     created_at = models.DateTimeField(auto_now_add=True)
 
     def __str__(self):
