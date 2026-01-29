@@ -10,7 +10,9 @@ from .serializers import (
     LoginSerializer,
     ProfileSerializer,
     RegisterSerializer,
+    RequestEmailChangeSerializer,
     ResetPasswordSerializer,
+    VerifyEmailChangeSerializer,
 )
 from rest_framework.views import APIView
 from rest_framework_simplejwt.tokens import RefreshToken
@@ -157,4 +159,81 @@ class ProfileView(APIView):
         serializer.save()
         return Response(
             {"message": "Profile updated successfully", "user": serializer.data}
+        )
+
+
+# -------------------------------
+# Request Email Change
+# -------------------------------
+class RequestEmailChangeView(APIView):
+    permission_classes = [IsAuthenticated]
+
+    def post(self, request):
+        serializer = RequestEmailChangeSerializer(data=request.data)
+        serializer.is_valid(raise_exception=True)
+
+        new_email = serializer.validated_data["new_email"]
+
+        if User.objects.filter(email=new_email).exists():
+            return Response(
+                {"message": "Email already in use"}, status=status.HTTP_400_BAD_REQUEST
+            )
+
+        otp = generate_otp()
+
+        # EmailOTP.objects.create(
+        #     user=request.user, otp=otp, purpose="change_email", email=new_email
+        # )
+        # delete previous unverified otp for same purpose
+        EmailOTP.objects.filter(
+            user=request.user, purpose="change_email", is_verified=False
+        ).delete()
+
+        # create fresh otp
+        EmailOTP.objects.create(
+            user=request.user, otp=otp, purpose="change_email", email=new_email
+        )
+
+        send_otp_email(new_email, otp)
+
+        return Response({"message": "OTP sent to new email"}, status=status.HTTP_200_OK)
+
+
+# -------------------------------
+# Verify Email Change
+# -------------------------------
+class VerifyEmailChangeView(APIView):
+    permission_classes = [IsAuthenticated]
+
+    def post(self, request):
+        serializer = VerifyEmailChangeSerializer(data=request.data)
+        serializer.is_valid(raise_exception=True)
+
+        otp_code = serializer.validated_data["otp"]
+
+        try:
+            record = EmailOTP.objects.get(
+                user=request.user,
+                otp=otp_code,
+                purpose="change_email",
+                is_verified=False,
+            )
+        except EmailOTP.DoesNotExist:
+            return Response(
+                {"message": "Invalid OTP"}, status=status.HTTP_400_BAD_REQUEST
+            )
+
+        if record.is_expired():
+            return Response(
+                {"message": "OTP expired"}, status=status.HTTP_400_BAD_REQUEST
+            )
+
+        request.user.email = record.email
+        request.user.save()
+
+        record.is_verified = True
+        record.save()
+
+        return Response(
+            {"message": "Email updated successfully"}, status=status.HTTP_200_OK
         )

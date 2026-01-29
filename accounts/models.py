@@ -42,6 +42,7 @@ class EmailOTP(models.Model):
     PURPOSE_CHOICES = (
         ("register", "Register"),
         ("reset_password", "Reset Password"),
+        ("change_email", "Change Email"),
     )
 
     user = models.ForeignKey(settings.AUTH_USER_MODEL, on_delete=models.CASCADE)
@@ -55,8 +56,10 @@ class EmailOTP(models.Model):
 
     created_at = models.DateTimeField(auto_now_add=True)
     is_verified = models.BooleanField(default=False)
+    email = models.EmailField(null=True, blank=True)
 
     class Meta:
+        ordering = ["-created_at"]
         constraints = [
             models.UniqueConstraint(
                 fields=["user", "purpose", "is_verified"],
@@ -70,3 +73,5 @@ class EmailOTP(models.Model):
 
     def __str__(self):
         return f"{self.user.email} - {self.otp} ({self.purpose})"
+
+    # email = models.EmailField(null=True, blank=True)

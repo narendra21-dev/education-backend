@@ -163,3 +163,11 @@ class ProfileSerializer(serializers.ModelSerializer):
         model = User
         fields = ("email", "username", "profile_image", "role")
         read_only_fields = ("email", "role")
+
+
+class RequestEmailChangeSerializer(serializers.Serializer):
+    new_email = serializers.EmailField()
+
+
+class VerifyEmailChangeSerializer(serializers.Serializer):
+    otp = serializers.CharField(max_length=6)
