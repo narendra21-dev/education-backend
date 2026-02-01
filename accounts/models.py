@@ -47,7 +47,8 @@ class EmailOTP(models.Model):
 
     user = models.ForeignKey(settings.AUTH_USER_MODEL, on_delete=models.CASCADE)
     otp = models.CharField(max_length=6)
-
+    attempts = models.PositiveIntegerField(default=0)
+    max_attempts = 5
     purpose = models.CharField(
         max_length=20,
         choices=PURPOSE_CHOICES,

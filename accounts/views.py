@@ -11,20 +11,22 @@ from .serializers import (
     ProfileSerializer,
     RegisterSerializer,
     RequestEmailChangeSerializer,
+    ResendOTPSerializer,
+    ResendRegisterOTPSerializer,
     ResetPasswordSerializer,
     VerifyEmailChangeSerializer,
 )
 from rest_framework.views import APIView
+from rest_framework.generics import GenericAPIView
 from rest_framework_simplejwt.tokens import RefreshToken
 from django.contrib.auth import get_user_model
 from .models import EmailOTP
 from .serializers import VerifyOTPSerializer
 from rest_framework.permissions import IsAuthenticated
-from rest_framework.views import APIView
-from rest_framework.response import Response
-from rest_framework import status
 from django.contrib.auth import get_user_model
 from .utils import generate_otp, send_otp_email
+from .throttles import OTPThrottle
+
 
 User = get_user_model()
 
@@ -37,7 +39,7 @@ class RegisterView(generics.CreateAPIView):
         serializer.is_valid(raise_exception=True)
         serializer.save()
         return Response(
-            {"message": "OTP sent to email (check console)"},
+            {"message": "OTP sent to email (check)"},
             status=status.HTTP_201_CREATED,
         )
 
@@ -46,34 +48,38 @@ User = get_user_model()
 
 
 class VerifyOTPView(generics.GenericAPIView):
+    # serializer_class = VerifyOTPSerializer
     serializer_class = VerifyOTPSerializer
+    throttle_classes = [OTPThrottle]
 
     def post(self, request):
         serializer = self.get_serializer(data=request.data)
         serializer.is_valid(raise_exception=True)
+        return Response({"message": "OTP verified"})
 
-        email = serializer.validated_data["email"]
-        otp = serializer.validated_data["otp"]
 
-        user = User.objects.filter(email=email).first()
-        if not user:
-            return Response({"error": "User not found"}, status=404)
+class ResendRegisterOTPView(generics.GenericAPIView):
+    serializer_class = ResendRegisterOTPSerializer
+    throttle_classes = [OTPThrottle]
 
-        otp_obj = EmailOTP.objects.filter(user=user, otp=otp, is_verified=False).last()
+    def post(self, request):
+        serializer = self.get_serializer(data=request.data)
+        serializer.is_valid(raise_exception=True)
+        return Response({"message": "OTP resent successfully"})
 
-        if not otp_obj:
-            return Response({"error": "Invalid OTP"}, status=400)
 
-        if otp_obj.is_expired():
-            return Response({"error": "OTP expired"}, status=400)
+# class ResendRegisterOTPView(APIView):
+#     permission_classes = []  # 🔓 Public endpoint
+#     throttle_classes = [OTPThrottle]
 
-        otp_obj.is_verified = True
-        otp_obj.save()
+#     def post(self, request):
+#         serializer = ResendRegisterOTPSerializer(data=request.data)
+#         serializer.is_valid(raise_exception=True)
 
-        user.is_active = True
-        user.save()
-
-        return Response({"message": "Account verified successfully"})
+#         return Response(
+#             {"message": "OTP resent successfully"},
+#             status=status.HTTP_200_OK,
+#         )
 
 
 class LoginView(APIView):
@@ -165,75 +171,51 @@ class ProfileView(APIView):
 # -------------------------------
 # Request Email Change
 # -------------------------------
-class RequestEmailChangeView(APIView):
+
+
+class RequestEmailChangeView(GenericAPIView):
     permission_classes = [IsAuthenticated]
+    serializer_class = RequestEmailChangeSerializer
 
     def post(self, request):
-        serializer = RequestEmailChangeSerializer(data=request.data)
+        serializer = self.get_serializer(
+            data=request.data,
+            context={"request": request},  # 🔥 REQUIRED
+        )
         serializer.is_valid(raise_exception=True)
 
-        new_email = serializer.validated_data["new_email"]
-
-        if User.objects.filter(email=new_email).exists():
-            return Response(
-                {"message": "Email already in use"}, status=status.HTTP_400_BAD_REQUEST
-            )
-
-        otp = generate_otp()
-
-        # EmailOTP.objects.create(
-        #     user=request.user, otp=otp, purpose="change_email", email=new_email
-        # )
-        # delete previous unverified otp for same purpose
-        EmailOTP.objects.filter(
-            user=request.user, purpose="change_email", is_verified=False
-        ).delete()
-
-        # create fresh otp
-        EmailOTP.objects.create(
-            user=request.user, otp=otp, purpose="change_email", email=new_email
-        )
-
-        send_otp_email(new_email, otp)
-
-        return Response({"message": "OTP sent to new email"}, status=status.HTTP_200_OK)
+        return Response({"message": "OTP sent to new email"})
 
 
 # -------------------------------
 # Verify Email Change
 # -------------------------------
-class VerifyEmailChangeView(APIView):
+
+
+class VerifyEmailChangeView(GenericAPIView):
     permission_classes = [IsAuthenticated]
+    serializer_class = VerifyEmailChangeSerializer
+
+    def get_serializer_context(self):
+        return {"request": self.request}
 
     def post(self, request):
-        serializer = VerifyEmailChangeSerializer(data=request.data)
+        serializer = self.get_serializer(data=request.data)
         serializer.is_valid(raise_exception=True)
+        serializer.save()
 
-        otp_code = serializer.validated_data["otp"]
+        return Response({"message": "Email updated successfully"}, status=200)
 
-        try:
-            record = EmailOTP.objects.get(
-                user=request.user,
-                otp=otp_code,
-                purpose="change_email",
-                is_verified=False,
-            )
-        except EmailOTP.DoesNotExist:
-            return Response(
-                {"message": "Invalid OTP"}, status=status.HTTP_400_BAD_REQUEST
-            )
 
-        if record.is_expired():
-            return Response(
-                {"message": "OTP expired"}, status=status.HTTP_400_BAD_REQUEST
-            )
+class ResendOTPView(GenericAPIView):
+    permission_classes = [IsAuthenticated]
+    serializer_class = ResendOTPSerializer
+    throttle_classes = [OTPThrottle]
 
-        request.user.email = record.email
-        request.user.save()
+    def get_serializer_context(self):
+        return {"request": self.request}
 
-        record.is_verified = True
-        record.save()
-
-        return Response(
-            {"message": "Email updated successfully"}, status=status.HTTP_200_OK
-        )
+    def post(self, request):
+        serializer = self.get_serializer(data=request.data)
+        serializer.is_valid(raise_exception=True)
+        return Response({"message": "OTP resent successfully"})
