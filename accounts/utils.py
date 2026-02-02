@@ -1,4 +1,5 @@
 import random
+import threading
 from django.core.mail import send_mail
 from django.conf import settings
 from rest_framework import serializers
@@ -35,13 +36,21 @@ def send_otp_email(email, otp, purpose="register"):
     message = f"Hello,\n\nYour OTP for {purpose.replace('_', ' ').title()} is: {otp}\nIt expires in 5 minutes.\n\nThank you."
 
     # Send email via SMTP
-    send_mail(
-        subject=subject,
-        message=message,
-        from_email=settings.DEFAULT_FROM_EMAIL,  # Ensure this is your Gmail email
-        recipient_list=[email],
-        fail_silently=False,
-    )
+    try:
+        send_mail(
+            subject=subject,
+            message=message,
+            from_email=settings.DEFAULT_FROM_EMAIL,  # Ensure this is your Gmail email
+            recipient_list=[email],
+            fail_silently=True,
+        )
+    except Exception as e:
+        print("Email error:", str(e))
+
+    threading.Thread(
+        target=send_otp_email,
+        args=(subject, message, email),
+    ).start()
 
 
 def verify_otp_or_raise(otp_obj, input_otp):
