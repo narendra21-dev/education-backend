@@ -3,6 +3,7 @@ import threading
 from django.core.mail import send_mail
 from django.conf import settings
 from rest_framework import serializers
+from decouple import config
 
 
 # -------------------------------
@@ -32,6 +33,7 @@ def _send_email(subject, message, email):
 # SEND OTP EMAIL (THREADED)
 # -------------------------------
 def send_otp_email(email, otp, purpose="register"):
+    print("EMAIL USER:", config("EMAIL_HOST_USER"))
     subject = f"Your OTP for {purpose.replace('_', ' ').title()}"
     message = (
         f"Hello,\n\n"
