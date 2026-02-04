@@ -43,7 +43,7 @@ def send_otp_email(email, otp, purpose):
 
     if purpose == "register":
         subject = "Verify Your Email"
-    elif purpose == "forgot":
+    elif purpose == "reset_password":
         subject = "Reset Your Password"
     elif purpose == "change_email":
         subject = "Verify Email Change"

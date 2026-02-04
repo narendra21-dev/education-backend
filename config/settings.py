@@ -189,6 +189,7 @@ REST_FRAMEWORK = {
         "anon": "10/min",
         "user": "30/min",
     },
+    # "DEFAULT_RENDERER_CLASSES": ("rest_framework.renderers.JSONRenderer",),
 }
 
 
