@@ -4,6 +4,10 @@ from django.core.mail import send_mail
 from django.conf import settings
 from rest_framework import serializers
 from decouple import config
+import resend
+# from django.conf import settings
+
+resend.api_key = settings.RESEND_API_KEY
 
 
 # -------------------------------
@@ -32,21 +36,34 @@ def _send_email(subject, message, email):
 # -------------------------------
 # SEND OTP EMAIL (THREADED)
 # -------------------------------
-def send_otp_email(email, otp, purpose="register"):
-    print("EMAIL USER:", config("EMAIL_HOST_USER"))
-    subject = f"Your OTP for {purpose.replace('_', ' ').title()}"
-    message = (
-        f"Hello,\n\n"
-        f"Your OTP for {purpose.replace('_', ' ').title()} is: {otp}\n"
-        f"It expires in 5 minutes.\n\n"
-        f"Thank you."
-    )
 
-    threading.Thread(
-        target=_send_email,
-        args=(subject, message, email),
-        daemon=True,
-    ).start()
+
+def send_otp_email(email, otp, purpose):
+    subject = ""
+
+    if purpose == "register":
+        subject = "Verify Your Email"
+    elif purpose == "forgot":
+        subject = "Reset Your Password"
+    elif purpose == "change_email":
+        subject = "Verify Email Change"
+    else:
+        subject = "Your OTP Code"
+
+    resend.Emails.send(
+        {
+            "from": settings.DEFAULT_FROM_EMAIL,
+            "to": [email],
+            "subject": subject,
+            "html": f"""
+        <div style="font-family:Arial;padding:20px">
+            <h2>{subject}</h2>
+            <h1 style="color:#4F46E5">{otp}</h1>
+            <p>This OTP will expire in 5 minutes.</p>
+        </div>
+        """,
+        }
+    )
 
 
 # -------------------------------

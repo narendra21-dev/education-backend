@@ -26,6 +26,9 @@ from rest_framework.permissions import IsAuthenticated
 from django.contrib.auth import get_user_model
 from .utils import generate_otp, send_otp_email
 from .throttles import OTPThrottle
+from django.core.mail import send_mail
+from rest_framework.decorators import api_view
+from django.conf import settings
 
 
 User = get_user_model()
@@ -219,3 +222,9 @@ class ResendOTPView(GenericAPIView):
         serializer = self.get_serializer(data=request.data)
         serializer.is_valid(raise_exception=True)
         return Response({"message": "OTP resent successfully"})
+
+
+@api_view(["GET"])
+def test_email(request):
+    send_otp_email("devn22827@gmail.com", "123456")
+    return Response({"message": "Email sent successfully"})

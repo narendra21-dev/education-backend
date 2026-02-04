@@ -35,8 +35,14 @@ class RegisterSerializer(serializers.ModelSerializer):
         otp = generate_otp()
         EmailOTP.objects.create(user=user, otp=otp, purpose="register")
 
-        # Send OTP via SMTP
-        send_otp_email(user.email, otp, purpose="register")
+        # # Send OTP via
+        # send_otp_email(user.email, otp, purpose="register")
+
+        try:
+            send_otp_email(user.email, otp, purpose="register")
+        except Exception as e:
+            # Optionally delete the user or log the error if email fails
+            print(f"SMTP Error: {e}")
 
         return user
 

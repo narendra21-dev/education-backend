@@ -42,20 +42,6 @@ BASE_DIR = Path(__file__).resolve().parent.parent
 SECRET_KEY = config("SECRET_KEY")
 DEBUG = config("DEBUG", cast=bool)
 ALLOWED_HOSTS = ["*"]
-# ALLOWED_HOSTS = config("ALLOWED_HOSTS").split(",")
-# ALLOWED_HOSTS = config("ALLOWED_HOSTS").split(",")
-# ALLOWED_HOSTS = config("ALLOWED_HOSTS", default="*").split(",")
-
-
-# Read ALLOWED_HOSTS from .env
-# raw_allowed_hosts = config("ALLOWED_HOSTS", default="*")
-
-# if raw_allowed_hosts == "*":
-#     ALLOWED_HOSTS = ["*"]
-# else:
-#     # Split comma-separated values into a list
-#     ALLOWED_HOSTS = [host.strip() for host in raw_allowed_hosts.split(",")]
-
 
 # Application definition
 
@@ -261,14 +247,5 @@ LOGGING = {
 }
 
 
-EMAIL_BACKEND = "django.core.mail.backends.smtp.EmailBackend"
-EMAIL_HOST = "smtp.gmail.com"
-EMAIL_PORT = 587
-EMAIL_USE_TLS = True
-
-EMAIL_HOST_USER = config("EMAIL_HOST_USER")
-EMAIL_HOST_PASSWORD = config("EMAIL_HOST_PASSWORD")
-DEFAULT_FROM_EMAIL = EMAIL_HOST_USER
-
-# print("EMAIL USER:", EMAIL_HOST_USER)
-# print("EMAIL PASS:", EMAIL_HOST_PASSWORD)
+RESEND_API_KEY = os.getenv("RESEND_API_KEY")
+DEFAULT_FROM_EMAIL = os.getenv("DEFAULT_FROM_EMAIL", "onboarding@resend.dev")
