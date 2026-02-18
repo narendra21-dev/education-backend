@@ -123,7 +123,7 @@ def reset_password(request):
 # -----------------------------
 
 
-@login_required
+# @login_required
 def universities(request):
     return render(request, "website/browse/universities.html")
 
