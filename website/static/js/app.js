@@ -706,19 +706,19 @@ document.addEventListener("DOMContentLoaded", () => {
         }
     });
 
-    fetch(API_BASE_URL, {
-        headers: {
-            Authorization: `Bearer ${localStorage.getItem("access_token")}`
-        }
-    })
-        .then(res => {
-            if (res.status === 401) {
-                localStorage.clear();
-                window.location.replace("/login/");
-                return;
-            }
-            return res.json();
-        });
+    // fetch(API_BASE_URL, {
+    //     headers: {
+    //         Authorization: `Bearer ${localStorage.getItem("access_token")}`
+    //     }
+    // })
+    //     .then(res => {
+    //         if (res.status === 401) {
+    //             localStorage.clear();
+    //             window.location.replace("/login/");
+    //             return;
+    //         }
+    //         return res.json();
+    //     });
     function showFormMessage(type, text) {
         const box = document.getElementById("formMessage");
         if (!box) return;
