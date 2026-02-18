@@ -1,0 +1,706 @@
+{% extends "website/base.html" %}
+
+{% block title %}Note{% endblock %}
+
+{% block content %}
+
+<link href="https://cdn.jsdelivr.net/npm/quill@2.0.2/dist/quill.snow.css" rel="stylesheet">
+
+
+<div class="container py-5">
+
+
+<!-- TOP BAR -->
+
+
+<div class="d-flex justify-content-between mb-4">
+
+<button onclick="history.back()" class="btn btn-secondary">
+
+← Back
+
+</button>
+
+
+<div>
+
+<button id="editBtn"
+class="btn btn-warning d-none"
+onclick="enableEdit()">
+
+Edit
+
+</button>
+
+
+<button id="saveBtn"
+class="btn btn-success d-none"
+onclick="saveNote()">
+
+Save
+
+</button>
+
+</div>
+
+
+</div>
+
+
+
+<!-- TITLE -->
+
+
+<input id="title"
+class="title-input"
+readonly>
+
+
+
+<!-- EDITOR -->
+
+
+<div id="editor"></div>
+
+
+
+<!-- IMAGE GALLERY -->
+
+
+<h4 class="mt-5">Images</h4>
+
+
+<div id="imageGallery" class="imageGallery"></div>
+
+
+
+<input type="file"
+id="imageUpload"
+multiple
+class="form-control mt-3 d-none">
+
+
+
+<!-- FULLSCREEN MODAL -->
+
+
+<div id="imageModal" class="imageModal">
+
+<span id="closeModal">&times;</span>
+
+<img id="modalImage">
+
+<button id="deleteImageBtn"
+class="deleteBtn d-none">
+
+Delete Image
+
+</button>
+
+
+</div>
+
+
+
+<div id="status" class="text-muted mt-3"></div>
+
+
+</div>
+
+
+
+<style>
+
+
+.title-input{
+
+font-size:32px;
+
+font-weight:bold;
+
+background:none;
+
+border:none;
+
+color:white;
+
+margin-bottom:20px;
+
+width: 100%;
+
+}
+
+
+.title-input:focus{
+
+outline:none;
+
+}
+
+
+
+/* EDITOR */
+
+
+#editor{
+
+background:#111;
+
+padding:20px;
+
+border-radius:10px;
+
+min-height:300px;
+
+}
+
+
+
+/* GALLERY */
+
+
+.imageGallery{
+
+display:grid;
+
+grid-template-columns:repeat(auto-fill,minmax(160px,1fr));
+
+gap:15px;
+
+margin-top:20px;
+
+}
+
+
+.imageCard{
+
+position:relative;
+
+overflow:hidden;
+
+border-radius:12px;
+
+cursor:pointer;
+
+}
+
+
+.imageCard img{
+
+width:100%;
+
+height:160px;
+
+object-fit:cover;
+
+transition:.3s;
+
+}
+
+
+.imageCard:hover img{
+
+transform:scale(1.08);
+
+}
+
+
+
+.deleteIcon{
+
+position:absolute;
+
+top:8px;
+
+right:8px;
+
+background:red;
+
+color:white;
+
+border:none;
+
+border-radius:50%;
+
+width:28px;
+
+height:28px;
+
+display:none;
+
+cursor:pointer;
+
+}
+
+
+.imageCard:hover .deleteIcon{
+
+display:block;
+
+}
+
+
+
+/* MODAL */
+
+
+.imageModal{
+
+display:none;
+
+position:fixed;
+
+top:0;
+
+left:0;
+
+width:100%;
+
+height:100%;
+
+background:rgba(0,0,0,.95);
+
+justify-content:center;
+
+align-items:center;
+
+flex-direction:column;
+
+z-index:9999;
+
+animation:fadeIn .3s;
+
+}
+
+
+.imageModal img{
+
+max-width:90%;
+
+max-height:80%;
+
+border-radius:10px;
+
+animation:zoomIn .3s;
+
+}
+
+
+#closeModal{
+
+position:absolute;
+
+top:20px;
+
+right:30px;
+
+font-size:40px;
+
+color:white;
+
+cursor:pointer;
+
+}
+
+
+.deleteBtn{
+
+margin-top:20px;
+
+background:red;
+
+color:white;
+
+border:none;
+
+padding:10px 20px;
+
+border-radius:8px;
+
+}
+
+
+
+@keyframes fadeIn{
+
+from{opacity:0}
+
+to{opacity:1}
+
+}
+
+
+@keyframes zoomIn{
+
+from{
+
+transform:scale(.7);
+
+opacity:0;
+
+}
+
+to{
+
+transform:scale(1);
+
+opacity:1;
+
+}
+
+}
+
+
+
+</style>
+
+
+
+<script src="https://cdn.jsdelivr.net/npm/quill@2.0.2/dist/quill.js"></script>
+
+
+<script>
+
+
+const token=localStorage.getItem("access_token")
+
+const isAdmin=localStorage.getItem("is_admin")
+
+const id=new URLSearchParams(location.search).get("id")
+
+
+let editing=false
+
+let selectedImageId=null
+
+let autoSaveTimer=null
+
+
+
+if(isAdmin=="true"){
+
+editBtn.classList.remove("d-none")
+
+imageUpload.classList.remove("d-none")
+
+}
+
+
+
+/* QUILL */
+
+
+
+
+    /* QUILL INIT BASED ON ROLE */
+
+let quill
+
+if(isAdmin=="true"){
+
+quill=new Quill('#editor',{
+
+theme:'snow',
+
+readOnly:true,
+
+modules:{
+
+toolbar:{
+
+container:[
+
+[{header:[1,2,3,false]}],
+
+['bold','italic','underline'],
+
+[{list:'ordered'},{list:'bullet'}],
+
+['link','image'],
+
+['clean']
+
+],
+
+
+}
+
+}
+
+})
+
+}else{
+
+/* STUDENT VIEW */
+
+quill=new Quill('#editor',{
+
+theme:'snow',
+
+readOnly:true,
+
+modules:{
+
+toolbar:false
+
+}
+
+})
+
+}
+
+if(isAdmin!="true"){
+
+    const toolbar=document.querySelector(".ql-toolbar")
+    
+    if(toolbar) toolbar.style.display="none"
+    
+    }
+
+
+
+    /* LOAD NOTE */
+
+
+function loadNote(){
+    
+//fetch(`/api/notes/${id}/`,{
+fetch(`https://education-backend-2-qmvp.onrender.com/api/notes/${id}/`,{
+
+headers:{Authorization:`Bearer ${token}`}
+
+})
+
+.then(res=>res.json())
+
+.then(note=>{
+
+title.value=note.title
+
+quill.root.innerHTML=note.content
+
+renderImages(note.images)
+
+})
+
+}
+
+
+loadNote()
+
+
+
+/* RENDER IMAGES */
+
+
+function renderImages(images){
+
+imageGallery.innerHTML=""
+
+
+images.forEach(img=>{
+
+
+const card=document.createElement("div")
+
+card.className="imageCard"
+
+
+card.innerHTML=`
+
+<img src="${img.image}">
+
+${isAdmin=="true"?`<button class="deleteIcon">×</button>`:""}
+
+`
+
+
+card.onclick=()=>openModal(img.image,img.id)
+
+
+if(isAdmin=="true"){
+
+card.querySelector(".deleteIcon").onclick=(e)=>{
+
+e.stopPropagation()
+
+deleteImage(img.id)
+
+}
+
+}
+
+
+imageGallery.appendChild(card)
+
+})
+
+}
+
+
+
+/* MODAL */
+
+
+function openModal(src,id){
+
+imageModal.style.display="flex"
+
+modalImage.src=src
+
+selectedImageId=id
+
+
+if(isAdmin=="true")
+
+deleteImageBtn.classList.remove("d-none")
+
+}
+
+
+closeModal.onclick=()=>{
+
+imageModal.style.display="none"
+
+}
+
+
+
+imageModal.onclick=(e)=>{
+
+if(e.target==imageModal)
+
+imageModal.style.display="none"
+
+}
+
+
+
+deleteImageBtn.onclick=()=>{
+
+deleteImage(selectedImageId)
+
+imageModal.style.display="none"
+
+}
+
+
+
+/* DELETE IMAGE */
+
+
+function deleteImage(id){
+
+if(!confirm("Delete image?"))return
+
+
+//fetch(`/api/delete-image/${id}/`,{
+fetch(`https://education-backend-2-qmvp.onrender.com/api/delete-image/${id}/`,{
+
+method:"DELETE",
+
+headers:{
+
+Authorization:`Bearer ${token}`
+
+}
+
+})
+
+.then(()=>loadNote())
+
+}
+
+
+
+/* ENABLE EDIT */
+
+
+function enableEdit(){
+
+editing=true
+
+title.removeAttribute("readonly")
+
+if(isAdmin=="true"){
+
+    quill.enable(true)
+    
+    document.querySelector(".ql-toolbar").style.display="block"
+    
+    }
+
+saveBtn.classList.remove("d-none")
+
+status.innerHTML="Editing..."
+
+startAutoSave()
+
+}
+
+
+
+/* AUTO SAVE */
+
+
+function startAutoSave(){
+
+autoSaveTimer=setInterval(()=>{
+
+saveNote(true)
+
+},5000)
+
+}
+
+
+
+/* SAVE */
+
+
+function saveNote(auto=false){
+
+if(!editing)return
+
+
+let form=new FormData()
+
+form.append("title",title.value)
+
+form.append("content",quill.root.innerHTML)
+
+
+for(let file of imageUpload.files)
+
+form.append("images",file)
+
+
+
+//fetch(`/api/notes/${id}/`,{
+fetch(`https://education-backend-2-qmvp.onrender.com/api/notes/${id}/`,{
+
+method:"PATCH",
+
+headers:{Authorization:`Bearer ${token}`},
+
+body:form
+
+})
+
+.then(()=>{
+
+status.innerHTML=auto?"Auto saved ✓":"Saved ✓"
+
+loadNote()
+
+})
+
+}
+
+
+
+</script>
+
+
+
+{% endblock %}

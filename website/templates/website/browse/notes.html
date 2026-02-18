@@ -1,0 +1,790 @@
+{% extends "website/base.html" %}
+{% block title %}Notes{% endblock %}
+
+{% block content %}
+
+<link href="https://cdn.jsdelivr.net/npm/quill@2.0.2/dist/quill.snow.css" rel="stylesheet">
+
+<div class="container py-4">
+
+
+<!-- HEADER -->
+
+
+<div class="d-flex justify-content-between align-items-center mb-4">
+
+
+<h2 class="gradient-text">📝 Notes</h2>
+
+
+<button onclick="openModal()"
+id="addBtn"
+class="btn btn-primary d-none">
+
++ New Note
+
+</button>
+
+
+</div>
+
+
+
+<!-- NOTES GRID -->
+
+
+<div id="notesList" class="notesGrid"></div>
+
+
+
+<!-- FIRST LOADER -->
+
+
+<div id="loader" class="text-center my-5">
+
+<div class="spinner-border text-primary"></div>
+
+</div>
+
+
+
+<!-- INFINITE SCROLL -->
+
+
+<div id="scrollTrigger" class="text-center py-4">
+
+<div id="scrollLoader"
+class="spinner-border text-primary d-none"></div>
+
+</div>
+
+
+</div>
+
+
+
+<!-- MODAL -->
+
+
+<div class="modal fade" id="noteModal">
+
+
+<div class="modal-dialog modal-lg">
+
+
+<div class="modal-content bg-dark text-light">
+
+
+<div class="modal-header">
+
+
+<h5 id="modalTitle">
+
+New Note
+
+</h5>
+
+
+<button class="btn-close btn-close-white"
+data-bs-dismiss="modal"></button>
+
+
+</div>
+
+
+
+<div class="modal-body">
+
+
+<input id="titleInput"
+class="form-control mb-3 bg-black text-light border-secondary"
+placeholder="Title">
+
+
+
+
+<div id="editor"></div>
+
+
+
+<input type="file"
+id="imageInput"
+multiple
+class="form-control mt-3">
+
+
+
+<div id="imagePreview" class="previewGrid"></div>
+
+
+</div>
+
+
+
+<div class="modal-footer">
+
+
+<button class="btn btn-primary"
+onclick="saveNote()">
+
+Save
+
+</button>
+
+
+</div>
+
+
+</div>
+
+
+</div>
+
+
+</div>
+
+
+
+
+
+<style>
+
+
+.notesGrid{
+
+display:grid;
+
+grid-template-columns:repeat(auto-fill,minmax(420px,1fr));
+
+gap:20px;
+
+}
+
+
+
+.note{
+
+background:#111;
+
+padding:20px;
+
+border-radius:12px;
+
+transition:0.3s;
+
+cursor:pointer;
+
+}
+
+
+.note:hover{
+
+transform:translateY(-5px);
+
+background:#181818;
+
+}
+
+
+.note-title{
+
+font-weight:600;
+
+margin-bottom:10px;
+
+}
+
+
+.note-content{
+
+color:#ccc;
+
+max-height:120px;
+
+overflow:hidden;
+
+}
+
+
+
+.note-actions{
+
+margin-top:15px;
+
+display:flex;
+
+gap:10px;
+
+}
+
+
+
+.btn-action{
+
+background:#222;
+
+border:none;
+
+color:white;
+
+padding:5px 12px;
+
+border-radius:6px;
+
+cursor:pointer;
+
+}
+
+
+.btn-action:hover{
+
+background:#333;
+
+}
+
+
+
+#editor{
+
+height:250px;
+
+background:#111;
+
+}
+
+
+
+.previewGrid{
+
+display:grid;
+
+grid-template-columns:repeat(auto-fill,80px);
+
+gap:10px;
+
+margin-top:10px;
+
+}
+
+
+.previewGrid img{
+
+width:80px;
+
+height:80px;
+
+object-fit:cover;
+
+border-radius:8px;
+
+}
+
+
+
+.gradient-text{
+
+background:linear-gradient(90deg,#60a5fa,#818cf8);
+
+-webkit-background-clip:text;
+
+-webkit-text-fill-color:transparent;
+
+}
+
+
+</style>
+
+
+
+<script src="https://cdn.jsdelivr.net/npm/quill@2.0.2/dist/quill.js"></script>
+
+
+<script>
+
+
+const token=localStorage.getItem("access_token")
+
+const isAdmin=localStorage.getItem("is_admin")
+
+const chapterId=new URLSearchParams(location.search).get("chapter")
+
+
+let editId=null
+
+let nextUrl=null
+
+let loading=false
+
+
+
+if(isAdmin=="true")
+
+addBtn.classList.remove("d-none")
+
+
+
+const quill=new Quill('#editor',{
+
+    theme:'snow',
+    
+    modules:{
+    
+    toolbar:{
+    
+    container:[
+    
+    [{header:[1,2,3,false]}],
+    
+    ['bold','italic','underline'],
+    
+    [{list:'ordered'},{list:'bullet'}],
+    
+    ['link','image'],
+    
+    ['clean']
+    
+    ],
+    
+
+    
+    }
+    
+    }
+    
+    })
+   
+    async function imageHandler(){
+
+        const input=document.createElement('input')
+        
+        input.type='file'
+        
+        input.accept='image/*'
+        
+        input.click()
+        
+        input.onchange=async ()=>{
+        
+        const file=input.files[0]
+        
+        const form=new FormData()
+        
+        form.append("image",file)
+        
+        
+        //const res=await fetch("/api/upload-image/",{
+        const res=await fetch("https://education-backend-2-qmvp.onrender.com/api/upload-image/",{
+        
+        method:"POST",
+        
+        headers:{
+        
+        Authorization:`Bearer ${token}`
+        
+        },
+        
+        body:form
+        
+        })
+        
+        
+        const data=await res.json()
+        
+        
+        const range=quill.getSelection()
+        
+        
+        quill.insertEmbed(range.index,'image',data.url)
+        
+        }
+        
+        }
+        
+
+
+function loadNotes(){
+    
+
+//fetch(`/api/notes/?chapter=${chapterId}`,{
+fetch(`https://education-backend-2-qmvp.onrender.com/api/notes/?chapter=${chapterId}`,{
+
+
+headers:{Authorization:`Bearer ${token}`}
+
+
+})
+
+
+.then(res=>res.json())
+
+
+.then(data=>{
+
+
+loader.style.display="none"
+
+
+nextUrl=data.next
+
+
+data.results.forEach(renderNote)
+
+
+setupScroll()
+
+
+})
+
+
+}
+
+
+
+
+function loadMoreNotes(){
+
+
+if(!nextUrl||loading)return
+
+
+loading=true
+
+
+scrollLoader.classList.remove("d-none")
+
+
+fetch(nextUrl,{
+
+
+headers:{Authorization:`Bearer ${token}`}
+
+
+})
+
+
+.then(res=>res.json())
+
+
+.then(data=>{
+console.log("data :___"+JSON.stringify(data))
+console.log("data1 :___"+data)
+
+nextUrl=data.next
+
+
+data.results.forEach(renderNote)
+
+
+loading=false
+
+
+scrollLoader.classList.add("d-none")
+
+
+})
+
+
+}
+
+
+
+
+function setupScroll(){
+
+
+new IntersectionObserver(entries=>{
+
+
+if(entries[0].isIntersecting)
+
+loadMoreNotes()
+
+
+}).observe(scrollTrigger)
+
+
+}
+
+
+
+
+function renderNote(note){
+
+
+notesList.innerHTML+=`
+
+
+<div class="note" id="note-${note.id}">
+
+
+<div onclick="openNote(${note.id})">
+
+
+<div class="note-title">
+
+
+${note.title}
+
+
+</div>
+
+
+
+<div class="note-content">
+
+
+${note.content}
+
+
+</div>
+
+
+</div>
+
+
+
+${isAdmin=="true"?`
+
+
+<div class="note-actions">
+
+
+<button class="btn-action"
+
+onclick="event.stopPropagation();editNote(${note.id})">
+
+Edit
+
+</button>
+
+
+<button class="btn-action"
+
+onclick="event.stopPropagation();deleteNote(${note.id})">
+
+Delete
+
+</button>
+
+
+</div>
+
+
+`:""}
+
+
+
+</div>
+
+
+`
+
+
+}
+
+
+
+
+function openNote(id){
+
+
+location.href=`/note_detail/?id=${id}`
+
+
+}
+
+
+
+
+imageInput.onchange=()=>{
+
+
+imagePreview.innerHTML=""
+
+
+for(let file of imageInput.files){
+
+
+let img=document.createElement("img")
+
+
+img.src=URL.createObjectURL(file)
+
+
+imagePreview.appendChild(img)
+
+
+}
+
+
+}
+
+
+
+
+function openModal(){
+
+editId=null
+
+titleInput.value=""
+
+quill.setContents([])
+
+imagePreview.innerHTML=""
+
+imageInput.value=""
+
+new bootstrap.Modal(noteModal).show()
+
+}
+
+
+
+
+
+function editNote(id){
+
+    
+//fetch(`/api/notes/${id}/`,{
+fetch(`https://education-backend-2-qmvp.onrender.com/api/notes/${id}/`,{
+
+
+headers:{Authorization:`Bearer ${token}`}
+
+
+})
+
+
+.then(res=>res.json())
+
+
+.then(note=>{
+
+    editId=id
+    
+    titleInput.value=note.title
+    
+    quill.clipboard.dangerouslyPasteHTML(note.content)
+    
+    imagePreview.innerHTML=""
+    
+    note.images.forEach(img=>{
+    
+    imagePreview.innerHTML+=`
+    
+    <img src="${img.image}">
+    
+    `
+    
+    })
+    
+    new bootstrap.Modal(noteModal).show()
+    
+    })
+
+
+}
+
+
+
+
+function saveNote(){
+
+
+let form=new FormData()
+
+
+form.append("title",titleInput.value)
+
+
+form.append("content",quill.root.innerHTML)
+
+
+form.append("chapter",chapterId)
+
+
+for(let file of imageInput.files)
+
+form.append("images",file)
+
+
+//let url="/api/notes/"
+
+let url="https://education-backend-2-qmvp.onrender.com/api/notes/"
+
+
+let method="POST"
+
+
+if(editId){
+
+url+=editId+"/"
+
+method="PATCH"
+
+}
+
+
+fetch(url,{
+
+
+method,
+
+
+headers:{Authorization:`Bearer ${token}`},
+
+
+body:form
+
+
+})
+
+
+.then(()=>location.reload())
+
+
+}
+
+
+
+
+function deleteNote(id){
+
+
+if(!confirm("Delete note?"))return
+
+
+//fetch(`/api/notes/${id}/`,{
+fetch(`https://education-backend-2-qmvp.onrender.com/api/notes/${id}/`,{
+
+
+method:"DELETE",
+
+
+headers:{Authorization:`Bearer ${token}`}
+
+
+})
+
+
+.then(()=>{
+
+
+document.getElementById(`note-${id}`).remove()
+
+
+})
+
+
+}
+
+
+
+
+loadNotes()
+
+
+</script>
+
+
+{% endblock %}

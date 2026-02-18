@@ -1,0 +1,406 @@
+{% extends "website/base.html" %}
+{% block content %}
+
+<div class="container browse-section">
+
+<!-- HEADER -->
+<div class="d-flex justify-content-between align-items-center mb-4">
+
+<div>
+<h2 class="browse-title">📘 Chapters</h2>
+<p class="browse-subtitle">Browse chapters inside this unit</p>
+</div>
+
+<button id="addBtn" class="primary-btn" onclick="openAddModal()" style="display:none;">
++ Add Chapter
+</button>
+
+</div>
+
+
+<!-- LOADER -->
+<div id="loader" class="text-center my-5">
+
+<div class="spinner-border text-primary"></div>
+
+</div>
+
+
+<!-- LIST -->
+<div class="row g-4" id="chapterList"></div>
+
+
+</div>
+
+
+
+<!-- ADD / EDIT MODAL -->
+<div class="modal fade" id="chapterModal">
+
+<div class="modal-dialog modal-dialog-centered">
+
+<div class="modal-content glass-card">
+
+<div class="modal-header border-0">
+
+<h5 id="modalTitle">Add Chapter</h5>
+
+<button class="btn-close btn-close-white" data-bs-dismiss="modal"></button>
+
+</div>
+
+
+<div class="modal-body">
+
+<input id="title" class="form-control mb-3" placeholder="Chapter Title">
+
+<input id="number" type="number" class="form-control" placeholder="Chapter Number">
+
+</div>
+
+
+<div class="modal-footer border-0">
+
+<button class="btn btn-secondary" data-bs-dismiss="modal">
+Cancel
+</button>
+
+<button id="saveBtn" class="primary-btn">
+Save
+</button>
+
+</div>
+
+</div>
+
+</div>
+
+</div>
+
+
+
+<!-- TOAST -->
+<div class="position-fixed bottom-0 end-0 p-3">
+
+<div id="toast" class="toast text-bg-dark">
+
+<div class="d-flex">
+
+<div id="toastBody" class="toast-body"></div>
+
+<button class="btn-close btn-close-white me-2 m-auto"
+data-bs-dismiss="toast"></button>
+
+</div>
+
+</div>
+
+</div>
+
+
+
+<style>
+
+.chapter-card{
+
+padding:24px;
+border-radius:18px;
+background:rgba(255,255,255,0.05);
+border:1px solid rgba(255,255,255,0.08);
+backdrop-filter:blur(12px);
+
+}
+
+.chapter-actions{
+
+margin-top:12px;
+
+}
+
+.action-btn{
+
+margin-right:12px;
+cursor:pointer;
+color:#818cf8;
+
+}
+
+.action-btn:hover{
+
+color:white;
+
+}
+
+</style>
+
+
+
+<script>
+
+const unit_id = "{{unit_id}}"
+
+const token = localStorage.getItem("access_token")
+
+const isAdmin = localStorage.getItem("is_admin")
+
+const modal = new bootstrap.Modal(
+document.getElementById("chapterModal")
+)
+
+const toast = new bootstrap.Toast(
+document.getElementById("toast")
+)
+
+let editId = null
+
+
+
+function showToast(msg){
+
+document.getElementById("toastBody").innerText = msg
+
+toast.show()
+
+}
+
+
+
+function loadChapters(){
+
+document.getElementById("loader").style.display="block"
+
+https://education-backend-2-qmvp.onrender.com/api/books/
+
+
+//fetch(`/api/chapters/?unit=${unit_id}`,{
+fetch(`https://education-backend-2-qmvp.onrender.com/api/chapters/?unit=${unit_id}`,{
+
+headers:{
+Authorization:`Bearer ${token}`
+}
+
+})
+
+.then(res=>res.json())
+
+.then(data=>{
+
+console.log("chapters :___" + JSON.stringify(data))
+document.getElementById("loader").style.display="none"
+
+
+let html=""
+
+
+data.results.forEach(c=>{
+
+
+html+=`
+
+<div class="col-md-4">
+
+
+    <div class="browse-card p-4 h-100 shadow-sm rounded"
+             style="cursor:pointer; transition:0.2s ease;"
+             onclick="window.location.href='/chapter-details/?chapter=${c.id}'"
+             onmouseover="this.style.transform='translateY(-4px)'"
+             onmouseout="this.style.transform='translateY(0)'">
+
+<h5>${c.chapter_number}. ${c.title}</h5>
+
+
+<div class="chapter-actions">
+
+${isAdmin=="true" ? `
+
+<span class="action-btn"
+onclick="editChapter(${c.id},'${c.title}',${c.chapter_number})">
+
+✏ Edit
+
+</span>
+
+
+<span class="action-btn"
+onclick="deleteChapter(${c.id})">
+
+🗑 Delete
+
+</span>
+
+`: ""}
+
+
+</div>
+
+
+</div>
+
+</div>
+
+`
+
+})
+
+
+document.getElementById("chapterList").innerHTML=html
+
+
+})
+
+}
+
+
+
+loadChapters()
+
+
+
+// ADD OPEN
+
+function openAddModal(){
+
+editId=null
+
+document.getElementById("modalTitle").innerText="Add Chapter"
+
+document.getElementById("title").value=""
+
+document.getElementById("number").value=""
+
+modal.show()
+
+}
+
+
+
+// EDIT OPEN
+
+function editChapter(id,title,number){
+
+editId=id
+
+document.getElementById("modalTitle").innerText="Edit Chapter"
+
+document.getElementById("title").value=title
+
+document.getElementById("number").value=number
+
+modal.show()
+
+}
+
+
+
+// SAVE
+
+document.getElementById("saveBtn").onclick=async function(){
+
+const title=document.getElementById("title").value
+
+const number=document.getElementById("number").value
+
+
+l//et url="/api/chapters/"
+
+let url="https://education-backend-2-qmvp.onrender.com/api/chapters/"
+
+let method="POST"
+
+
+if(editId){
+
+url+=editId+"/"
+
+method="PUT"
+
+}
+
+
+const res=await fetch(url,{
+
+method:method,
+
+headers:{
+
+"Content-Type":"application/json",
+
+Authorization:`Bearer ${token}`
+
+},
+
+body:JSON.stringify({
+
+title:title,
+
+chapter_number:number,
+
+unit:unit_id
+
+})
+
+})
+
+
+if(res.ok){
+
+showToast("Saved")
+
+modal.hide()
+
+loadChapters()
+
+}else{
+
+showToast("Error")
+
+}
+
+}
+
+
+
+// DELETE
+
+function deleteChapter(id){
+
+if(!confirm("Delete?")) return
+
+
+//fetch(`/api/chapters/${id}/`,{
+fetch(`https://education-backend-2-qmvp.onrender.com/api/chapters/${id}/`,{
+
+method:"DELETE",
+
+headers:{
+
+Authorization:`Bearer ${token}`
+
+}
+
+})
+
+.then(()=>{
+
+showToast("Deleted")
+
+loadChapters()
+
+})
+
+}
+
+
+
+// ADMIN CHECK
+
+if(isAdmin=="true"){
+
+document.getElementById("addBtn").style.display="block"
+
+}
+
+</script>
+
+
+{% endblock %}

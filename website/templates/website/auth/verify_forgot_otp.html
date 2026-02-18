@@ -1,0 +1,24 @@
+{% extends "website/base.html" %}
+{% block content %}
+<section class="auth-section">
+<div class="auth-card">
+  <h3>Verify OTP</h3>
+  <p class="auth-subtitle">OTP sent to your email</p>
+
+  <form method="post">
+    {% csrf_token %}
+    <input type="text" name="otp" maxlength="6" required class="form-control mb-3">
+
+    <button class="btn btn-primary w-100">
+      <span class="btn-text">Verify OTP</span>
+      <span class="btn-spinner d-none"></span>
+    </button>
+  </form>
+
+  <button id="resendOtpBtn" class="btn btn-link mt-3" disabled>
+    Resend OTP (<span id="timer">60</span>s)
+  </button>
+</div>
+</section>
+
+{% endblock %}

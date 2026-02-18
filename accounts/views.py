@@ -29,6 +29,7 @@ from .throttles import OTPThrottle
 from django.core.mail import send_mail
 from rest_framework.decorators import api_view
 from django.conf import settings
+from drf_spectacular.utils import extend_schema
 
 
 User = get_user_model()
@@ -86,12 +87,18 @@ class ResendRegisterOTPView(generics.GenericAPIView):
 
 
 class LoginView(APIView):
+    @extend_schema(request=LoginSerializer, responses={200: dict})
     def post(self, request):
         serializer = LoginSerializer(data=request.data)
         serializer.is_valid(raise_exception=True)
 
         user = serializer.validated_data["user"]
         refresh = RefreshToken.for_user(user)
+
+        # 🔥 ADD CLAIMS INTO THE ACCESS TOKEN
+        refresh.access_token["email"] = user.email
+        refresh.access_token["is_staff"] = user.is_staff
+        refresh.access_token["is_superuser"] = user.is_superuser
 
         return Response(
             {
@@ -101,6 +108,7 @@ class LoginView(APIView):
                     "id": user.id,
                     "email": user.email,
                     "username": user.username,
+                    "is_staff": user.is_staff,
                 },
             },
             status=status.HTTP_200_OK,
@@ -115,8 +123,11 @@ class TestProtectedView(APIView):
 
 
 class ForgotPasswordRequestView(APIView):
+    serializer_class = ForgotPasswordRequestSerializer
+
     def post(self, request):
-        serializer = ForgotPasswordRequestSerializer(data=request.data)
+        serializer = self.serializer_class(data=request.data)
+        # serializer = ForgotPasswordRequestSerializer(data=request.data)
         serializer.is_valid(raise_exception=True)
         return Response(
             {"message": "OTP sent to your email"},
@@ -125,8 +136,11 @@ class ForgotPasswordRequestView(APIView):
 
 
 class ForgotPasswordVerifyOTPView(APIView):
+    serializer_class = ForgotPasswordVerifyOTPSerializer
+
     def post(self, request):
-        serializer = ForgotPasswordVerifyOTPSerializer(data=request.data)
+        serializer = self.serializer_class(data=request.data)
+        # serializer = ForgotPasswordVerifyOTPSerializer(data=request.data)
         serializer.is_valid(raise_exception=True)
         return Response(
             {"message": "OTP verified successfully"},
@@ -135,8 +149,11 @@ class ForgotPasswordVerifyOTPView(APIView):
 
 
 class ResetPasswordView(APIView):
+    serializer_class = ResetPasswordSerializer
+
     def post(self, request):
-        serializer = ResetPasswordSerializer(data=request.data)
+        serializer = self.serializer_class(data=request.data)
+        # serializer = ResetPasswordSerializer(data=request.data)
         serializer.is_valid(raise_exception=True)
 
         user = serializer.validated_data["user"]
@@ -228,3 +245,25 @@ class ResendOTPView(GenericAPIView):
 def test_email(request):
     send_otp_email("devn22827@gmail.com", "123456")
     return Response({"message": "Email sent successfully"})
+
+
+# -------------------------------
+# MeView - Get current user info
+# -------------------------------
+
+
+class MeView(APIView):
+    permission_classes = [IsAuthenticated]
+
+    def get(self, request):
+        user = request.user
+        print("user.email : ______", user)
+        print("user.email, : ______", user.email, user.is_staff, user.is_superuser)
+
+        return Response(
+            {
+                "email": user.email,
+                "is_staff": user.is_staff,
+                "is_superuser": user.is_superuser,
+            }
+        )

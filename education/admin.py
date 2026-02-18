@@ -1,6 +1,6 @@
 from django.contrib import admin
 
-from .models import Book, Chapter, Course, Note, Question, Unit, University
+from .models import Book, Chapter, Course, Note, NoteImage, Question, Unit, University
 from django.utils.html import format_html
 
 # Register your models here.
@@ -50,9 +50,14 @@ class CourseAdmin(admin.ModelAdmin):
 # -----------------------
 @admin.register(Book)
 class BookAdmin(admin.ModelAdmin):
-    list_display = ["id", "name", "course", "preview_image", "created_at"]
+    # list_display = ["id", "name", "course", "preview_image", "created_at"]
+    # search_fields = ["name", "course__name"]
+    # list_filter = ["course"]
+    # list_display = ["id", "name", "period", "preview_image", "created_at"]
+    # list_filter = ["period"]
     search_fields = ["name", "course__name"]
-    list_filter = ["course"]
+    list_display = ("name", "period", "created_at")
+    list_filter = ("period",)
 
     def preview_image(self, obj):
         if obj.cover_image:  # works for CloudinaryField or ImageField
@@ -63,6 +68,11 @@ class BookAdmin(admin.ModelAdmin):
         return "No Image"
 
     preview_image.short_description = "Cover"
+
+    def get_course(self, obj):
+        return obj.period.course
+
+    # get_course.short_description = "Course"
 
 
 # -----------------------
@@ -103,6 +113,11 @@ class QuestionAdmin(admin.ModelAdmin):
     list_display = ["id", "question", "chapter", "created_by", "created_at"]
     search_fields = ["question", "chapter__title", "created_by__email"]
     list_filter = ["chapter"]
+
+
+@admin.register(NoteImage)
+class NoteImageAdmin(admin.ModelAdmin):
+    list_display = ["id", "note", "uploaded_at"]
 
 
 # @admin.register(Course)

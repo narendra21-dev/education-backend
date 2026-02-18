@@ -40,7 +40,8 @@ BASE_DIR = Path(__file__).resolve().parent.parent
 # ALLOWED_HOSTS = []
 
 SECRET_KEY = config("SECRET_KEY")
-DEBUG = config("DEBUG", cast=bool)
+# DEBUG = config("DEBUG", cast=bool)
+DEBUG = False
 ALLOWED_HOSTS = ["*"]
 
 # Application definition
@@ -62,6 +63,7 @@ INSTALLED_APPS = [
     "drf_spectacular",
     "cloudinary",
     "cloudinary_storage",
+    "website",
 ]
 
 MIDDLEWARE = [
@@ -179,7 +181,7 @@ REST_FRAMEWORK = {
         "rest_framework.filters.OrderingFilter",
     ],
     "DEFAULT_PAGINATION_CLASS": "rest_framework.pagination.PageNumberPagination",
-    "PAGE_SIZE": 1,
+    "PAGE_SIZE": 10,
     "DEFAULT_SCHEMA_CLASS": "drf_spectacular.openapi.AutoSchema",
     "DEFAULT_THROTTLE_CLASSES": [
         "rest_framework.throttling.AnonRateThrottle",
@@ -221,6 +223,11 @@ cloudinary.config(
 
 # MEDIA_URL = "/media/"
 # MEDIA_ROOT = os.path.join(BASE_DIR, "media")
+
+TEMPLATES[0]["DIRS"] = [BASE_DIR / "templates"]
+# STATICFILES_DIRS = [BASE_DIR / "static"]
+STATICFILES_DIRS = [BASE_DIR / "website" / "static"]
+
 STATIC_URL = "/static/"
 STATIC_ROOT = os.path.join(BASE_DIR, "staticfiles")
 STATICFILES_STORAGE = "whitenoise.storage.CompressedManifestStaticFilesStorage"
@@ -250,3 +257,6 @@ LOGGING = {
 
 RESEND_API_KEY = os.getenv("RESEND_API_KEY")
 DEFAULT_FROM_EMAIL = os.getenv("DEFAULT_FROM_EMAIL", "onboarding@resend.dev")
+
+
+API_BASE_URL = "https://education-backend-2-qmvp.onrender.com"

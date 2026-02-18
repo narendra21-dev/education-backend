@@ -1,0 +1,73 @@
+{% extends 'website/base.html' %}
+
+{% block content %}
+<div class="container mt-5 pt-4">
+
+  <div class="d-flex justify-content-between align-items-center mb-4">
+    <h2 class="fw-bold">Dashboard</h2>
+
+    <button id="goUniversityBtn" class="primary-btn">
+      🎓 Manage Universities
+    </button>
+  </div>
+  <a href="/universities/" class="btn btn-outline-light btn-sm me-2">
+    Universities
+  </a>
+  <!-- Loader -->
+  <div id="dashboardLoader" class="text-center my-5">
+    <div class="spinner-border text-primary"></div>
+  </div>
+
+  <!-- Error -->
+  <div id="dashboardError" class="alert alert-danger d-none"></div>
+
+  <!-- Dashboard Content -->
+  <div id="dashboardContent" class="d-none">
+
+    <div class="row g-4">
+
+      <!-- Universities -->
+      <div class="col-md-4">
+        <div class="card glass-card p-3 h-100">
+          <h6 class="text-muted">Universities</h6>
+          <h3 id="universitiesCount">0</h3>
+          <ul id="universitiesList" class="list-unstyled mt-3 small"></ul>
+        </div>
+      </div>
+
+      <!-- Courses -->
+      <div class="col-md-4">
+        <div class="card glass-card p-3 h-100">
+          <h6 class="text-muted">Courses</h6>
+          <h3 id="coursesCount">0</h3>
+          <ul id="coursesList" class="list-unstyled mt-3 small"></ul>
+        </div>
+      </div>
+
+      <!-- Users (Admin) -->
+      <div class="col-md-4">
+        <div class="card glass-card p-3 h-100">
+          <h6 class="text-muted">Users</h6>
+          <h3 id="usersCount">0</h3>
+          <ul id="usersList" class="list-unstyled mt-3 small"></ul>
+        </div>
+      </div>
+
+    </div>
+  </div>
+
+</div>
+
+<script>
+  document.getElementById("goUniversityBtn").addEventListener("click", () => {
+    window.location.href = "/browse/universities/";
+  });
+</script>
+{% endblock %}
+
+
+{% comment %} 
+<div> <button id="logoutBtn" class="btn btn-danger position-fixed top-300 end-0 m-3">
+  Logout
+</button>
+</div> {% endcomment %}

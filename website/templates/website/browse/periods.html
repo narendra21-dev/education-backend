@@ -1,0 +1,272 @@
+{% extends "website/base.html" %}
+{% block title %}Periods{% endblock %}
+
+{% block content %}
+<section class="browse-section">
+  <div class="container">
+
+    <!-- Header -->
+    <div class="d-flex justify-content-between align-items-center">
+      <h1 id="pageTitle" class="browse-title">Select Period</h1>
+
+      <div class="d-flex gap-2">
+        <button id="addPeriodBtn"
+                class="btn btn-primary d-none">
+          ➕ Add Period
+        </button>
+
+        <button class="btn btn-outline-secondary"
+                onclick="window.history.back()">
+          ← Back
+        </button>
+      </div>
+    </div>
+
+    <p class="browse-subtitle">
+      Choose semester or year to continue
+    </p>
+
+    <!-- Loader -->
+    <div id="loader" class="text-center my-5">
+      <div class="spinner-border text-primary"></div>
+    </div>
+
+    <!-- Grid -->
+    <div id="periodsGrid" class="row g-4 d-none"></div>
+
+    <!-- Modal -->
+    <div class="modal fade" id="periodModal">
+      <div class="modal-dialog">
+        <div class="modal-content p-4">
+
+          <h5 id="periodModalTitle">Add Period</h5>
+
+          <select id="periodType" class="form-control my-2">
+            <option value="semester">Semester</option>
+            <option value="year">Year</option>
+          </select>
+
+          <input id="periodNumber"
+                 type="number"
+                 class="form-control my-2"
+                 placeholder="Period number">
+
+          <div class="text-end mt-3">
+            <button class="btn btn-secondary"
+                    data-bs-dismiss="modal">
+              Cancel
+            </button>
+            <button id="savePeriodBtn"
+                    class="btn btn-primary">
+              Save
+            </button>
+          </div>
+
+        </div>
+      </div>
+    </div>
+
+  </div>
+</section>
+
+<script>
+(function () {
+
+  if (!window.location.pathname.includes("periods")) return;
+
+  const token = localStorage.getItem("access_token");
+  const isAdmin = localStorage.getItem("is_admin");
+
+  if (!token) {
+    window.location.href = "/login/";
+    return;
+  }
+
+  const params = new URLSearchParams(window.location.search);
+  const courseId = params.get("course");
+
+  if (!courseId) {
+    window.location.href = "/courses/";
+    return;
+  }
+
+  // Works for both localhost and production
+ // const API_URL = `http://127.0.0.1:8000/api/courses/${courseId}/`;
+ // const PERIOD_API = `http://127.0.0.1:8000/api/periods/`; 
+
+  const API_URL = `https://education-backend-2-qmvp.onrender.com/api/courses/${courseId}/`;
+  const PERIOD_API = `https://education-backend-2-qmvp.onrender.com/api/periods/`; 
+
+  //const API_BASE = "https://education-backend-2-qmvp.onrender.com/api/universities/";
+
+  
+
+  const addBtn = document.getElementById("addPeriodBtn");
+  const saveBtn = document.getElementById("savePeriodBtn");
+  const modal = new bootstrap.Modal(document.getElementById("periodModal"));
+
+  const grid = document.getElementById("periodsGrid");
+  const loader = document.getElementById("loader");
+  const pageTitle = document.getElementById("pageTitle");
+
+  let editingId = null;
+
+  // Show Add button for admin
+  if (isAdmin == "true") {
+    addBtn.classList.remove("d-none");
+
+    addBtn.addEventListener("click", () => {
+      editingId = null;
+      document.getElementById("periodNumber").value = "";
+      document.getElementById("periodType").value = "semester";
+      modal.show();
+    });
+  }
+
+  async function loadPeriods() {
+    try {
+      loader.classList.remove("d-none");
+      grid.classList.add("d-none");
+      grid.innerHTML = "";
+
+      const res = await fetch(API_URL, {
+        headers: { Authorization: `Bearer ${token}` }
+      });
+
+      if (!res.ok) throw new Error("Failed to load");
+
+      const data = await res.json();
+
+      pageTitle.innerText = data.name;
+
+      const label =
+        data.curriculum_type === "semester"
+          ? "Semester"
+          : "Year";
+
+      if (!data.periods || !data.periods.length) {
+        grid.innerHTML = `
+          <div class="col-12 text-center text-muted">
+            No periods found.
+          </div>
+        `;
+      } else {
+
+        data.periods.forEach(period => {
+
+          const adminButtons = isAdmin == "true" ? `
+            <div class="mt-3 d-flex gap-2 justify-content-center">
+              <button class="btn btn-sm btn-outline-primary"
+                onclick="event.stopPropagation(); PeriodApp.edit(${period.id}, '${period.period_type}', ${period.number})">
+                Edit
+              </button>
+
+              <button class="btn btn-sm btn-outline-danger"
+                onclick="event.stopPropagation(); PeriodApp.delete(${period.id})">
+                Delete
+              </button>
+            </div>
+          ` : "";
+
+          grid.innerHTML += `
+            <div class="col-md-3 col-sm-6">
+              <div class="browse-card p-4 text-center shadow-sm rounded h-100"
+                   style="cursor:pointer; transition:0.2s ease;"
+                   onclick="window.location.href='/books/?period=${period.id}'"
+                   onmouseover="this.style.transform='translateY(-4px)'"
+                   onmouseout="this.style.transform='translateY(0)'">
+
+                <div class="mb-2">
+                  <span class="badge bg-secondary">
+                    ${label}
+                  </span>
+                </div>
+
+                <h4 class="fw-bold">
+                  ${period.number}
+                </h4>
+
+                <p class="small auth-subtitle mb-0">
+                  View Units
+                </p>
+
+                ${adminButtons}
+
+              </div>
+            </div>
+          `;
+        });
+      }
+
+    } catch (error) {
+      grid.innerHTML = `
+        <div class="col-12 text-center text-danger">
+          Failed to load periods.
+        </div>
+      `;
+    } finally {
+      loader.classList.add("d-none");
+      grid.classList.remove("d-none");
+    }
+  }
+
+  saveBtn.addEventListener("click", async () => {
+
+    const payload = {
+      course: courseId,
+      period_type: document.getElementById("periodType").value,
+      number: document.getElementById("periodNumber").value,
+    };
+
+    let url = PERIOD_API;
+    let method = "POST";
+
+    if (editingId) {
+      url += `${editingId}/`;
+      method = "PUT";
+    }
+
+    const res = await fetch(url, {
+      method,
+      headers: {
+        "Content-Type": "application/json",
+        Authorization: `Bearer ${token}`
+      },
+      body: JSON.stringify(payload)
+    });
+
+    if (res.ok) {
+      modal.hide();
+      loadPeriods();
+    } else {
+      alert("Failed to save period");
+    }
+  });
+
+  window.PeriodApp = {
+
+    edit(id, type, number) {
+      editingId = id;
+      document.getElementById("periodType").value = type;
+      document.getElementById("periodNumber").value = number;
+      modal.show();
+    },
+
+    async delete(id) {
+      if (!confirm("Delete this period?")) return;
+
+      await fetch(`${PERIOD_API}${id}/`, {
+        method: "DELETE",
+        headers: { Authorization: `Bearer ${token}` }
+      });
+
+      loadPeriods();
+    }
+  };
+
+  loadPeriods();
+
+})();
+</script>
+
+{% endblock %}

@@ -1,0 +1,532 @@
+{% extends "website/base.html" %}
+{% block title %}Units{% endblock %}
+
+{% block content %}
+
+<section class="browse-section">
+
+<div class="container">
+
+<!-- HEADER -->
+<div class="d-flex justify-content-between align-items-center mb-4">
+
+<div>
+
+<h2 class="browse-title">Units</h2>
+
+<p class="browse-subtitle">
+Select a unit to view chapters
+</p>
+
+</div>
+
+<div class="d-flex gap-2">
+
+<button id="addUnitBtn"
+        class="primary-btn d-none">
+
+➕ Add Unit
+
+</button>
+
+<button class="btn btn-outline-secondary"
+        onclick="window.history.back()">
+
+← Back
+
+</button>
+
+</div>
+
+</div>
+
+
+<!-- LOADER -->
+<div id="loader" class="text-center my-5">
+
+<div class="spinner-border text-primary"></div>
+
+</div>
+
+
+<!-- EMPTY -->
+<div id="emptyState"
+     class="text-center d-none">
+
+<h5 class="text-muted">
+
+No Units Found
+
+</h5>
+
+</div>
+
+
+<!-- GRID -->
+<div id="unitsGrid"
+     class="row g-4 d-none">
+
+</div>
+
+
+</div>
+
+</section>
+
+
+
+<!-- ADD EDIT MODAL -->
+<div class="modal fade" id="unitModal">
+
+<div class="modal-dialog modal-dialog-centered">
+
+<div class="modal-content glass-card p-4">
+
+<h5 id="modalTitle">
+
+Add Unit
+
+</h5>
+
+
+<input type="text"
+       id="unitName"
+       class="form-control mt-3"
+       placeholder="Unit name">
+
+
+<div class="text-end mt-4">
+
+<button class="btn btn-secondary"
+        data-bs-dismiss="modal">
+
+Cancel
+
+</button>
+
+
+<button id="saveUnitBtn"
+        class="primary-btn">
+
+Save
+
+</button>
+
+</div>
+
+
+</div>
+
+</div>
+
+</div>
+
+
+
+<!-- DELETE MODAL -->
+<div class="modal fade" id="deleteModal">
+
+<div class="modal-dialog modal-dialog-centered">
+
+<div class="modal-content glass-card p-4 text-center">
+
+<h5>
+
+Delete Unit?
+
+</h5>
+
+<p class="text-muted">
+
+This cannot be undone
+
+</p>
+
+<button id="confirmDeleteBtn"
+        class="btn btn-danger">
+
+Delete
+
+</button>
+
+</div>
+
+</div>
+
+</div>
+
+
+
+<script>
+
+(function(){
+const token =
+localStorage.getItem("access_token")
+
+const isAdmin =
+localStorage.getItem("is_admin") === "true"
+
+const bookId =
+"{{book_id}}"
+;
+if(!token){
+
+location.href="/login/"
+
+return
+
+}
+
+//const API_LIST =
+//`/api/units/?book=${bookId}`
+
+//const API =
+//`/api/units/`
+
+const API_LIST =
+`https://education-backend-2-qmvp.onrender.com/api/units/?book=${bookId}`
+
+const API =
+`https://education-backend-2-qmvp.onrender.com/api/units/`
+
+
+
+
+const grid =
+document.getElementById("unitsGrid")
+
+const loader =
+document.getElementById("loader")
+
+const empty =
+document.getElementById("emptyState")
+
+const addBtn =
+document.getElementById("addUnitBtn")
+
+const saveBtn =
+document.getElementById("saveUnitBtn")
+
+const deleteBtn =
+document.getElementById("confirmDeleteBtn")
+
+const modal =
+new bootstrap.Modal(
+document.getElementById("unitModal")
+)
+
+
+const deleteModal =
+new bootstrap.Modal(
+document.getElementById("deleteModal")
+)
+
+
+
+
+
+let editingId=null
+
+let deletingId=null
+
+
+// SHOW ADMIN BUTTON
+
+if(isAdmin){
+
+addBtn.classList.remove("d-none")
+
+addBtn.onclick=()=>{
+
+editingId=null
+
+unitName.value=""
+
+modalTitle.innerText="Add Unit"
+
+modal.show()
+
+}
+
+}
+
+
+
+// LOAD UNITS
+
+async function loadUnits(){
+console.log("start")
+loader.classList.remove("d-none")
+
+grid.classList.add("d-none")
+
+empty.classList.add("d-none")
+
+console.log("start");
+try{
+
+const res =
+await fetch(API_LIST,{
+
+headers:{
+Authorization:`Bearer ${token}`
+}
+
+})
+
+
+const data =
+await res.json()
+
+console.log("data :__"+JSON.stringify(data))
+
+
+
+grid.innerHTML=""
+
+
+if(data.results.length===0){
+
+empty.classList.remove("d-none")
+
+}
+else{
+
+
+data.results.forEach(unit=>{
+
+
+grid.innerHTML += `
+
+
+<div class="col-lg-3 col-md-4 col-sm-6">
+
+<div class="browse-card h-100 shadow-sm"
+
+onclick="window.location.href='/chapters/?unit=${unit.id}'"
+
+style="cursor:pointer; transition:.3s">
+
+
+<h5 class="fw-bold">
+
+${unit.name}
+
+</h5>
+
+
+<div class="mb-2 text-info small">
+
+📚 ${unit.chapter_count} Chapters
+
+</div>
+
+
+<ul class="small auth-subtitle">
+
+${unit.chapter_preview.map(c=>
+
+`<li>${c.title}</li>`
+
+).join("")}
+
+</ul>
+
+
+${isAdmin ?
+
+`
+
+<div class="d-flex gap-2 mt-3">
+
+
+<button class="btn btn-sm btn-outline-primary w-100"
+
+onclick="event.stopPropagation(); editUnit(${unit.id},'${unit.name}')">
+
+Edit
+
+</button>
+
+
+<button class="btn btn-sm btn-outline-danger w-100"
+
+onclick="event.stopPropagation(); askDelete(${unit.id})">
+
+Delete
+
+</button>
+
+
+</div>
+
+`
+
+:
+
+""
+
+}
+
+
+</div>
+
+</div>
+
+
+`
+
+
+})
+
+
+grid.classList.remove("d-none")
+
+}
+
+
+}
+catch{
+
+empty.innerHTML="Failed to load"
+
+empty.classList.remove("d-none")
+
+}
+finally{
+
+loader.classList.add("d-none")
+
+}
+
+}
+
+
+
+// SAVE
+
+saveBtn.onclick = async ()=>{
+
+
+const name = unitName.value.trim()
+
+if(!name)return
+
+
+saveBtn.innerHTML="Saving..."
+
+saveBtn.disabled=true
+
+
+let url=API
+
+let method="POST"
+
+
+if(editingId){
+
+url+=editingId+"/"
+
+method="PUT"
+
+}
+
+
+await fetch(url,{
+
+method,
+
+headers:{
+
+"Content-Type":"application/json",
+
+Authorization:`Bearer ${token}`
+
+},
+
+body:JSON.stringify({
+
+name,
+book:bookId
+
+})
+
+})
+
+
+saveBtn.innerHTML="Save"
+
+saveBtn.disabled=false
+
+
+modal.hide()
+
+loadUnits()
+
+}
+
+
+
+// DELETE
+
+deleteBtn.onclick=async()=>{
+
+
+await fetch(API+deletingId+"/",{
+
+method:"DELETE",
+
+headers:{
+
+Authorization:`Bearer ${token}`
+
+}
+
+})
+
+
+deleteModal.hide()
+
+loadUnits()
+
+}
+
+
+
+// GLOBAL FUNCTIONS
+
+
+window.editUnit=(id,name)=>{
+
+editingId=id
+
+unitName.value=name
+
+modalTitle.innerText="Edit Unit"
+
+modal.show()
+
+}
+
+
+window.askDelete=(id)=>{
+
+deletingId=id
+
+deleteModal.show()
+
+}
+
+
+
+// INIT
+
+loadUnits()
+
+
+})()
+
+</script>
+
+
+{% endblock %}

@@ -53,8 +53,37 @@ class Course(models.Model):
         return f"{self.name} ({self.duration} {self.duration_unit})"
 
 
+class AcademicPeriod(models.Model):
+    PERIOD_TYPE = (
+        ("semester", "Semester"),
+        ("year", "Year"),
+    )
+
+    course = models.ForeignKey(Course, on_delete=models.CASCADE, related_name="periods")
+    period_type = models.CharField(max_length=10, choices=PERIOD_TYPE)
+    number = models.PositiveIntegerField()
+    order = models.PositiveIntegerField(default=0)
+
+    class Meta:
+        ordering = ["order"]
+        unique_together = ("course", "number", "period_type")
+
+    def __str__(self):
+        return f"{self.period_type.capitalize()} {self.number}"
+
+
 class Book(models.Model):
-    course = models.ForeignKey(Course, on_delete=models.CASCADE, related_name="books")
+    # course = models.ForeignKey(Course, on_delete=models.CASCADE, related_name="books")
+
+    # period = models.ForeignKey(
+    #     AcademicPeriod, on_delete=models.CASCADE, related_name="books"
+    # )
+    period = models.ForeignKey(
+        AcademicPeriod,
+        on_delete=models.CASCADE,
+        related_name="books",
+    )
+
     name = models.CharField(max_length=150)
     description = models.TextField(blank=True)
     cover_image = CloudinaryField(
@@ -63,11 +92,13 @@ class Book(models.Model):
     created_at = models.DateTimeField(auto_now_add=True)
 
     class Meta:
-        unique_together = ("course", "name")
+        unique_together = ("period", "name")
+        # unique_together = ("course", "name")
         ordering = ["name"]
 
     def __str__(self):
-        return f"{self.name} - {self.course.name}"
+        return f"{self.name} - {self.period}"
+        # return f"{self.name} - {self.course.name}"
 
 
 class Unit(models.Model):
@@ -113,6 +144,37 @@ class Note(models.Model):
         return self.title
 
 
+# class NoteImage(models.Model):
+
+#     note = models.ForeignKey(
+#         Note,
+#         on_delete=models.CASCADE,
+#         related_name="images"
+#     )
+
+#     image = CloudinaryField(
+#         "image",
+#         folder="notes"
+#     )
+
+#     uploaded_at = models.DateTimeField(auto_now_add=True)
+
+#     def __str__(self):
+#         return f"Image for {self.note.title}"
+
+
+# ✅ PUT HERE
+class NoteImage(models.Model):
+    note = models.ForeignKey(Note, on_delete=models.CASCADE, related_name="images")
+
+    image = CloudinaryField("image", folder="notes")
+
+    uploaded_at = models.DateTimeField(auto_now_add=True)
+
+    def __str__(self):
+        return f"Image for {self.note.title}"
+
+
 class Question(models.Model):
     chapter = models.ForeignKey(
         Chapter, on_delete=models.CASCADE, related_name="questions"
@@ -129,3 +191,18 @@ class Question(models.Model):
 
     def __str__(self):
         return self.question[:50]
+
+
+class Paper(models.Model):
+    chapter = models.ForeignKey(
+        Chapter, on_delete=models.CASCADE, related_name="papers"
+    )
+
+    title = models.CharField(max_length=255)
+
+    pdf = models.FileField(upload_to="papers/")
+
+    created_at = models.DateTimeField(auto_now_add=True)
+
+    def __str__(self):
+        return self.title

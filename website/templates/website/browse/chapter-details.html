@@ -1,0 +1,847 @@
+{% extends "website/base.html" %}
+
+{% block title %}Chapter Dashboard{% endblock %}
+
+{% block content %}
+
+<style>
+
+
+.chapter-header{
+
+display:flex;
+justify-content:space-between;
+align-items:center;
+margin-bottom:30px;
+
+}
+
+
+
+.chapter-title{
+
+font-size:30px;
+font-weight:700;
+color:#fff;
+
+}
+
+
+
+.chapter-sub{
+
+color:#9ca3af;
+font-size:14px;
+
+}
+
+
+
+/* STATS BAR */
+
+.stats-bar{
+
+display:flex;
+gap:20px;
+margin-bottom:30px;
+
+}
+
+
+
+.stat-box{
+
+flex:1;
+background:linear-gradient(135deg,#111827,#1f2937);
+padding:20px;
+border-radius:14px;
+text-align:center;
+border:1px solid rgba(255,255,255,0.05);
+
+animation:fadeUp 0.6s ease;
+
+}
+
+
+
+.stat-number{
+
+font-size:22px;
+font-weight:700;
+color:#60a5fa;
+
+}
+
+
+
+.stat-label{
+
+font-size:13px;
+color:#9ca3af;
+
+}
+
+
+
+/* GRID */
+
+.chapter-card{
+
+background:linear-gradient(135deg,#111827,#1f2937);
+border-radius:16px;
+padding:25px;
+cursor:pointer;
+transition:all 0.3s ease;
+border:1px solid rgba(255,255,255,0.05);
+position:relative;
+overflow:hidden;
+
+animation:fadeUp 0.7s ease;
+
+}
+
+
+
+.chapter-card:hover{
+
+transform:translateY(-6px);
+box-shadow:0 15px 35px rgba(37,99,235,0.3);
+
+}
+
+
+
+.chapter-card::before{
+
+content:"";
+position:absolute;
+top:0;
+left:-100%;
+width:100%;
+height:100%;
+background:linear-gradient(120deg,transparent,rgba(255,255,255,0.1),transparent);
+transition:0.6s;
+
+}
+
+
+
+.chapter-card:hover::before{
+
+left:100%;
+
+}
+
+
+
+.chapter-icon{
+
+font-size:32px;
+margin-bottom:10px;
+
+}
+
+
+
+.chapter-count{
+
+color:#60a5fa;
+margin-bottom:15px;
+
+}
+
+
+
+.chapter-btn{
+
+background:linear-gradient(90deg,#2563eb,#4f46e5);
+border:none;
+border-radius:8px;
+padding:10px;
+color:#fff;
+font-weight:600;
+
+}
+
+
+
+/* ANIMATION */
+
+@keyframes fadeUp{
+
+from{
+
+opacity:0;
+transform:translateY(20px);
+
+}
+
+to{
+
+opacity:1;
+transform:translateY(0);
+
+}
+
+}
+
+
+
+</style>
+
+<section class="browse-section">
+
+<div class="container">
+
+<!-- HEADER -->
+
+<div class="chapter-header">
+
+<div>
+
+<div id="chapterTitle"
+class="chapter-title">
+
+Loading...
+
+</div>
+
+<div class="chapter-sub">
+
+Chapter learning dashboard
+
+</div>
+
+</div>
+
+<button class="btn btn-outline-light"
+onclick="history.back()">
+
+← Back
+
+</button>
+
+</div>
+
+<!-- STATS -->
+
+<div class="stats-bar">
+
+<div class="stat-box">
+
+<div id="statQuestions"
+class="stat-number">
+
+0
+
+</div>
+
+<div class="stat-label">
+
+Questions
+
+</div>
+
+</div>
+
+<div class="stat-box">
+
+<div id="statNotes"
+class="stat-number">
+
+0
+
+</div>
+
+<div class="stat-label">
+
+Notes
+
+</div>
+
+</div>
+
+<div class="stat-box">
+
+<div id="statPapers"
+class="stat-number">
+
+0
+
+</div>
+
+<div class="stat-label">
+
+Papers
+
+</div>
+
+</div>
+
+</div>
+
+<!-- LOADER -->
+
+<div id="loader"
+class="text-center my-5">
+
+<div class="spinner-border text-primary"></div>
+
+</div>
+
+<!-- GRID -->
+
+<div id="grid"
+class="row g-4 d-none">
+
+<!-- QUESTIONS -->
+
+<div class="col-md-4">
+
+<div class="chapter-card"
+onclick="openQuestions()">
+
+<div class="chapter-icon">
+
+📘
+
+</div>
+
+<h4>
+
+Questions
+
+</h4>
+
+<div class="chapter-count">
+
+<span id="questionsCount">
+
+0
+
+</span>
+
+Questions
+
+</div>
+
+<button class="chapter-btn w-100">
+
+Open
+
+</button>
+
+</div>
+
+</div>
+
+<!-- NOTES -->
+
+<div class="col-md-4">
+
+<div class="chapter-card"
+onclick="openNotes()">
+
+<div class="chapter-icon">
+
+📝
+
+</div>
+
+<h4>
+
+Notes
+
+</h4>
+
+<div class="chapter-count">
+
+<span id="notesCount">
+
+0
+
+</span>
+
+Notes
+
+</div>
+
+<button class="chapter-btn w-100">
+
+Open
+
+</button>
+
+</div>
+
+</div>
+
+<!-- PAPERS -->
+
+<div class="col-md-4">
+
+<div class="chapter-card"
+onclick="openPapers()">
+
+<div class="chapter-icon">
+
+📄
+
+</div>
+
+<h4>
+
+Papers
+
+</h4>
+
+<div class="chapter-count">
+
+<span id="papersCount">
+
+0
+
+</span>
+
+Papers Comming Soon...
+
+
+</div>
+
+
+
+<button class="chapter-btn w-100">
+
+Open
+
+</button>
+
+</div>
+
+</div>
+
+</div>
+
+</div>
+
+</section>
+
+<script>
+
+
+(function(){
+
+
+const token =
+localStorage.getItem("access_token")
+
+
+const chapterId =
+"{{chapter_id}}"
+
+
+if(!token){
+
+location.href="/login/"
+return
+
+}
+
+
+//const API =
+//`/api/chapters/${chapterId}/dashboard/`
+
+const API =
+`https://education-backend-2-qmvp.onrender.com/api/chapters/${chapterId}/dashboard/`
+
+
+const loader =
+document.getElementById("loader")
+
+
+const grid =
+document.getElementById("grid")
+
+
+
+function animateValue(id,value){
+
+
+let start=0
+
+
+const speed=15
+
+
+const step=()=>{
+
+
+if(start<value){
+
+start++
+
+document.getElementById(id).innerText=start
+
+requestAnimationFrame(step)
+
+}
+
+
+}
+
+
+step()
+
+}
+
+
+
+async function load(){
+
+
+const res =
+await fetch(API,{
+
+headers:{
+Authorization:`Bearer ${token}`
+}
+
+})
+
+
+const data =
+await res.json()
+
+
+
+document.getElementById("chapterTitle")
+.innerText=data.title
+
+
+animateValue("questionsCount",data.questions_count)
+
+animateValue("notesCount",data.notes_count)
+
+animateValue("papersCount",data.papers_count || 0)
+
+
+
+animateValue("statQuestions",data.questions_count)
+
+animateValue("statNotes",data.notes_count)
+
+animateValue("statPapers",data.papers_count || 0)
+
+
+
+loader.classList.add("d-none")
+
+grid.classList.remove("d-none")
+
+
+}
+
+
+
+window.openQuestions=()=>{
+
+location.href=`/questions/?chapter=${chapterId}`
+
+}
+
+
+
+window.openNotes=()=>{
+
+location.href=`/notes/?chapter=${chapterId}`
+
+}
+
+
+
+window.openPapers=()=>{
+
+location.href=`/papers/?chapter=${chapterId}`
+
+}
+
+
+
+load()
+
+
+})()
+
+
+</script>
+
+{% endblock %}
+
+
+
+{% comment %} {% extends "website/base.html" %}
+
+{% block title %}Chapter{% endblock %}
+
+{% block content %}
+
+<section class="browse-section">
+
+<div class="container">
+
+
+<!-- HEADER -->
+
+<div class="d-flex justify-content-between align-items-center mb-4">
+
+<div>
+
+<h2 id="chapterTitle" class="browse-title">
+
+Loading...
+
+</h2>
+
+<p class="browse-subtitle">
+
+Chapter Dashboard
+
+</p>
+
+</div>
+
+
+<button class="btn btn-outline-secondary"
+
+onclick="window.history.back()">
+
+← Back
+
+</button>
+
+
+</div>
+
+
+
+<!-- LOADER -->
+
+<div id="loader" class="text-center my-5">
+
+<div class="spinner-border text-primary"></div>
+
+</div>
+
+
+
+<!-- GRID -->
+
+<div id="grid" class="row g-4 d-none">
+
+
+
+<!-- QUESTIONS -->
+
+<div class="col-md-6">
+
+
+<div class="browse-card h-100"
+
+onclick="openQuestions()"
+
+style="cursor:pointer">
+
+
+<h4 class="fw-bold">
+
+Questions
+
+</h4>
+
+
+<p class="text-info">
+
+<span id="questionsCount">0</span>
+
+Questions
+
+</p>
+
+
+<button class="primary-btn w-100">
+
+Open Questions
+
+</button>
+
+
+</div>
+
+</div>
+
+
+
+<!-- NOTES -->
+
+<div class="col-md-6">
+
+
+<div class="browse-card h-100"
+
+onclick="openNotes()"
+
+style="cursor:pointer">
+
+
+<h4 class="fw-bold">
+
+Notes
+
+</h4>
+
+
+<p class="text-info">
+
+<span id="notesCount">0</span>
+
+Notes
+
+</p>
+
+
+<button class="primary-btn w-100">
+
+Open Notes
+
+</button>
+
+
+</div>
+
+</div>
+
+
+
+</div>
+
+</div>
+
+</section>
+
+
+
+<script>
+
+(function(){
+    console.log("chapter dashboard 1 :___"
+    )
+    
+const token = localStorage.getItem("access_token")
+
+const chapterId = "{{chapter_id}}"
+console.log("chapter dashboard 2 :___"
+)
+
+
+if(!token){
+
+location.href="/login/"
+return
+
+}
+console.log("chapter dashboard 3 :___"
+)
+
+
+
+const API = `/api/chapters/${chapterId}/dashboard/`
+
+
+
+const loader =
+document.getElementById("loader")
+
+const grid =
+document.getElementById("grid")
+
+console.log("chapter dashboard 4 :___"
+)
+
+
+async function load(){
+
+    console.log("chapter dashboard 5 :___"
+    )
+    
+const res =
+await fetch(API,{
+
+headers:{
+
+Authorization:`Bearer ${token}`
+
+}
+
+})
+
+
+const data =
+await res.json()
+
+console.log("chapter dashboard 7 :___" + JSON.stringify(data)
+)
+
+
+
+document.getElementById("chapterTitle").innerText =
+data.title
+
+
+
+document.getElementById("questionsCount").innerText =
+data.questions_count
+
+
+
+document.getElementById("notesCount").innerText =
+data.notes_count
+
+
+
+loader.classList.add("d-none")
+
+grid.classList.remove("d-none")
+
+}
+
+
+
+window.openQuestions =
+function(){
+
+location.href =
+`/questions/?chapter=${chapterId}`
+
+}
+
+
+
+window.openNotes =
+function(){
+
+location.href =
+`/notes/?chapter=${chapterId}`
+
+}
+
+
+
+load()
+
+
+})()
+
+</script>
+
+
+{% endblock %} {% endcomment %}

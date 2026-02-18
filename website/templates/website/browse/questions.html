@@ -1,0 +1,690 @@
+{% extends "website/base.html" %}
+
+{% block title %}Questions{% endblock %}
+
+{% block content %}
+
+<div class="container mt-4">
+
+<!-- HEADER -->
+
+<div class="chapter-header">
+
+<div>
+
+<div class="chapter-title">
+
+❓ Chapter Questions
+
+</div>
+
+<div class="chapter-sub">
+
+Practice and manage chapter questions
+
+</div>
+
+</div>
+
+<div>
+
+<button onclick="history.back()"
+class="btn btn-outline-light me-2">
+
+← Back
+
+</button>
+
+<button id="addBtn"
+class="chapter-btn d-none"
+onclick="openAddModal()">
+
+* Add Question
+
+</button>
+
+</div>
+
+</div>
+
+<!-- STATS BAR -->
+
+<div class="stats-bar">
+
+<div class="stat-box">
+
+<div id="totalQuestions"
+class="stat-number">
+
+0
+
+</div>
+
+<div class="stat-label">
+
+Total Questions
+
+</div>
+
+</div>
+
+<div class="stat-box">
+
+<div class="stat-number">
+
+Practice
+
+</div>
+
+<div class="stat-label">
+
+Mode
+
+</div>
+
+</div>
+
+<div class="stat-box">
+
+<div id="adminStat"
+class="stat-number">
+
+User
+
+</div>
+
+<div class="stat-label">
+
+Role
+
+</div>
+
+</div>
+
+</div>
+
+<!-- LOADER -->
+
+<div id="loader"
+class="text-center mt-5">
+
+<div class="spinner-border text-primary"></div>
+
+</div>
+
+<!-- EMPTY -->
+
+<div id="empty"
+class="text-center mt-5 d-none">
+
+No questions found
+
+</div>
+
+<!-- GRID -->
+
+<div id="questionsList"
+class="row g-4">
+
+</div>
+
+</div>
+
+<!-- MODAL -->
+
+<div class="modal fade"
+id="questionModal">
+
+<div class="modal-dialog">
+
+<div class="modal-content bg-dark text-light">
+
+<div class="modal-header">
+
+<h5 id="modalTitle">
+
+Add Question
+
+</h5>
+
+<button class="btn-close btn-close-white"
+data-bs-dismiss="modal"></button>
+
+</div>
+
+<div class="modal-body">
+
+<textarea id="questionInput"
+class="form-control mb-3"
+placeholder="Question"></textarea>
+
+<textarea id="answerInput"
+class="form-control"
+placeholder="Answer"></textarea>
+
+</div>
+
+<div class="modal-footer">
+
+<button class="btn btn-secondary"
+data-bs-dismiss="modal">
+
+Cancel
+
+</button>
+
+<button class="chapter-btn"
+onclick="saveQuestion()">
+
+Save
+
+</button>
+
+</div>
+
+</div>
+
+</div>
+
+</div>
+
+<style>
+
+
+.chapter-header{
+
+display:flex;
+justify-content:space-between;
+align-items:center;
+margin-bottom:30px;
+
+}
+
+
+.chapter-title{
+
+font-size:30px;
+font-weight:700;
+color:#fff;
+
+}
+
+
+.chapter-sub{
+
+color:#9ca3af;
+font-size:14px;
+
+}
+
+
+
+/* STATS */
+
+.stats-bar{
+
+display:flex;
+gap:20px;
+margin-bottom:30px;
+
+}
+
+
+.stat-box{
+
+flex:1;
+background:linear-gradient(135deg,#111827,#1f2937);
+padding:20px;
+border-radius:14px;
+text-align:center;
+border:1px solid rgba(255,255,255,0.05);
+
+animation:fadeUp 0.6s ease;
+
+}
+
+
+.stat-number{
+
+font-size:22px;
+font-weight:700;
+color:#60a5fa;
+
+}
+
+
+.stat-label{
+
+font-size:13px;
+color:#9ca3af;
+
+}
+
+
+
+/* CARD */
+
+.question-card{
+
+background:linear-gradient(135deg,#111827,#1f2937);
+border-radius:16px;
+padding:25px;
+border:1px solid rgba(255,255,255,0.05);
+transition:all 0.3s ease;
+
+animation:fadeUp 0.7s ease;
+
+}
+
+
+.question-card:hover{
+
+transform:translateY(-6px);
+box-shadow:0 15px 35px rgba(37,99,235,0.3);
+
+}
+
+
+.question-title{
+
+font-weight:600;
+margin-bottom:10px;
+
+}
+
+
+.question-answer{
+
+color:#9ca3af;
+font-size:14px;
+margin-bottom:15px;
+
+}
+
+
+
+/* BUTTON GROUP */
+
+.action-buttons{
+
+display:flex;
+gap:10px;
+
+}
+
+
+.icon-btn{
+
+flex:1;
+border:none;
+padding:10px;
+border-radius:8px;
+cursor:pointer;
+color:white;
+font-weight:600;
+transition:0.3s;
+
+}
+
+
+.edit-btn{
+
+background:linear-gradient(90deg,#f59e0b,#d97706);
+
+}
+
+
+.edit-btn:hover{
+
+transform:scale(1.05);
+
+}
+
+
+.delete-btn{
+
+background:linear-gradient(90deg,#ef4444,#dc2626);
+
+}
+
+
+.delete-btn:hover{
+
+transform:scale(1.05);
+
+}
+
+
+.chapter-btn{
+
+background:linear-gradient(90deg,#2563eb,#4f46e5);
+border:none;
+border-radius:8px;
+padding:10px 15px;
+color:#fff;
+font-weight:600;
+
+}
+
+
+
+/* ANIMATION */
+
+@keyframes fadeUp{
+
+from{
+
+opacity:0;
+transform:translateY(20px);
+
+}
+
+to{
+
+opacity:1;
+transform:translateY(0);
+
+}
+
+}
+
+
+</style>
+
+<script>
+
+
+const token = localStorage.getItem("access_token")
+
+const chapterId =
+new URLSearchParams(
+window.location.search
+).get("chapter")
+
+
+//const API_URL =
+//`/api/questions/?chapter=${chapterId}`
+
+
+const API_URL =
+`https://education-backend-2-qmvp.onrender.com/api/questions/?chapter=${chapterId}`
+
+
+
+let editId=null
+
+//let isAdmin=false
+
+const isAdmin = localStorage.getItem("is_admin")
+
+
+
+try{
+
+const payload =
+JSON.parse(atob(token.split('.')[1]))
+
+
+//isAdmin =
+//payload.is_staff ||
+//payload.is_superuser ||
+//payload.role==="teacher"
+
+}catch{}
+
+
+
+if(isAdmin){
+
+addBtn.classList.remove("d-none")
+
+adminStat.innerText="Admin"
+
+}
+
+
+
+function loadQuestions(){
+
+
+fetch(API_URL,{
+
+headers:{
+Authorization:`Bearer ${token}`
+}
+
+})
+
+.then(res=>res.json())
+
+.then(data=>{
+
+
+loader.style.display="none"
+
+
+totalQuestions.innerText=data.results.length
+
+
+if(data.results.length===0){
+
+empty.classList.remove("d-none")
+
+return
+
+}
+
+
+
+let html=""
+
+
+data.results.forEach(q=>{
+
+
+html+=`
+
+<div class="col-md-6">
+
+
+<div class="question-card">
+
+
+<div class="question-title">
+
+${q.question}
+
+</div>
+
+
+<div class="question-answer">
+
+${q.answer}
+
+</div>
+
+
+
+${isAdmin ? `
+
+
+<div class="action-buttons">
+
+
+<button class="icon-btn edit-btn"
+
+onclick="editQuestion(
+
+${q.id},
+
+\`${q.question}\`,
+
+\`${q.answer}\`
+
+)">
+
+✏ Edit
+
+</button>
+
+
+
+<button class="icon-btn delete-btn"
+
+onclick="deleteQuestion(${q.id})">
+
+🗑 Delete
+
+</button>
+
+
+</div>
+
+` : ""}
+
+
+</div>
+
+
+</div>
+
+`
+
+
+})
+
+
+questionsList.innerHTML=html
+
+
+})
+
+}
+
+
+
+function openAddModal(){
+
+editId=null
+
+questionInput.value=""
+
+answerInput.value=""
+
+modalTitle.innerText="Add Question"
+
+
+new bootstrap.Modal(
+questionModal
+).show()
+
+}
+
+
+
+function editQuestion(id,q,a){
+
+editId=id
+
+questionInput.value=q
+
+answerInput.value=a
+
+modalTitle.innerText="Edit Question"
+
+
+new bootstrap.Modal(
+questionModal
+).show()
+
+}
+
+
+
+function saveQuestion(){
+
+
+const body={
+
+question:questionInput.value,
+
+answer:answerInput.value,
+
+chapter:chapterId
+
+}
+
+
+//const url =
+//editId ?
+//`/api/questions/${editId}/` :
+//`/api/questions/`
+
+const url =
+editId ?
+`https://education-backend-2-qmvp.onrender.com/api/questions/${editId}/` :
+`https://education-backend-2-qmvp.onrender.com/api/questions/`
+
+
+
+
+const method =
+editId ? "PATCH" : "POST"
+
+
+
+fetch(url,{
+
+method:method,
+
+headers:{
+"Content-Type":"application/json",
+Authorization:`Bearer ${token}`
+},
+
+body:JSON.stringify(body)
+
+})
+
+.then(()=>{
+
+bootstrap.Modal
+.getInstance(questionModal)
+.hide()
+
+loadQuestions()
+
+})
+
+}
+
+
+
+function deleteQuestion(id){
+
+if(!confirm("Delete question?")) return
+
+https://education-backend-2-qmvp.onrender.com/api
+//fetch(`/api/questions/${id}/`,{
+fetch(`https://education-backend-2-qmvp.onrender.com/api/questions/${id}/`,{
+
+method:"DELETE",
+
+headers:{
+Authorization:`Bearer ${token}`
+}
+
+})
+
+.then(loadQuestions)
+
+}
+
+
+
+loadQuestions()
+
+
+</script>
+
+{% endblock %}

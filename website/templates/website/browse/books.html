@@ -1,0 +1,213 @@
+{% extends 'website/base.html' %}
+{% block content %}
+
+<section class="browse-section container">
+  <div class="d-flex justify-content-between align-items-center mb-4">
+    <div>
+      <h2 class="browse-title">Books</h2>
+      <p class="browse-subtitle">Browse all books for this period</p>
+    </div>
+
+    {% if request.user.is_staff %}
+    <button class="primary-btn" onclick="openForm()">+ Add Book</button>
+    {% endif %}
+  </div>
+
+  <!-- ADMIN FORM -->
+  <div id="bookFormCard" class="glass-card mb-4" style="display:none;">
+    <h5 id="formTitle">Add Book</h5>
+
+    <input type="text" id="bookName" class="form-control mb-2" placeholder="Book Name">
+
+    <textarea id="bookDescription" class="form-control mb-2"
+      placeholder="Book Description"></textarea>
+
+    <input type="file" id="bookImage" class="form-control mb-3">
+
+    {% comment %} <button onclick="saveBook()" class="primary-btn">Save</button> {% endcomment %}
+    <button onclick="saveBook(event)" class="primary-btn">Save</button>
+    <button onclick="closeForm()" class="btn btn-secondary ms-2">Cancel</button>
+  </div>
+
+  <!-- BOOK LIST -->
+  <div class="row g-4" id="bookList"></div>
+</section>
+
+<script>
+  const params = new URLSearchParams(window.location.search);
+  const bookId = params.get("book");
+const token = localStorage.getItem("access_token");
+const isAdmin = localStorage.getItem("is_admin");
+console.log(token, isAdmin);
+
+//const periodId = "{{period_id}}";
+//const API_URL = `/api/books/?period=${periodId}`;
+//const BOOK_API = `/api/books/`;
+
+const periodId = "{{period_id}}";
+const API_URL = `https://education-backend-2-qmvp.onrender.com/api/books/?period=${periodId}`;
+const BOOK_API = `https://education-backend-2-qmvp.onrender.com/api/books/`;
+
+
+
+let editId = null;
+
+/* ---------------- LOAD BOOKS ---------------- */
+function loadBooks() {
+  fetch(API_URL)
+  .then(res => res.json())
+  .then(data => {
+    console.log("data __: "+ JSON.stringify(data.results.id));
+
+    let html = "";
+
+    data.results.forEach(book => {
+
+      html += `
+      <div class="col-md-4">
+        <p class="text-end text-muted small mb-1">ID: ${book.id}</p>
+        <div class="glass-card h-100 p-3 text-center d-flex flex-column align-items-center"
+         style="cursor:pointer; transition:0.2s ease;"
+                   onclick="window.location.href='/units/?book=${book.id}'"
+                   onmouseover="this.style.transform='translateY(-4px)'"
+                   onmouseout="this.style.transform='translateY(0)'">
+
+          ${book.cover_url ? 
+            `<img src="${book.cover_url}" 
+                 class="img-fluid mb-3 rounded"
+                 style="height:180px; object-fit:cover; ">`
+            : `<div class="mb-3 text-center text-muted">No Image</div>`}
+
+          <h5>${book.name}</h5>
+
+          <p class="auth-subtitle small">
+            ${book.description ? book.description : "No description"}
+          </p>
+
+          ${isAdmin == "true" ? `
+            <div class="mt-3 d-flex gap-2">
+              <button onclick="event.stopPropagation(); editBook(${book.id}, \`${book.name}\`, \`${book.description}\`)"
+                class="btn btn-sm btn-warning">Edit</button>
+
+              <button onclick="event.stopPropagation(); deleteBook(${book.id})"
+                class="btn btn-sm btn-danger">Delete</button>
+            </div>
+          ` : ""}
+        </div>
+      </div>
+      `;
+    });
+
+    document.getElementById("bookList").innerHTML = html;
+  });
+}
+
+/* ---------------- FORM CONTROLS ---------------- */
+function openForm() {
+  document.getElementById("bookFormCard").style.display = "block";
+  document.getElementById("formTitle").innerText = "Add Book";
+}
+
+function closeForm() {
+  document.getElementById("bookFormCard").style.display = "none";
+  editId = null;
+}
+
+/* ---------------- SAVE BOOK ---------------- */
+function saveBook() {
+
+    const button = event.target;
+  
+    const name = document.getElementById("bookName").value;
+    const description = document.getElementById("bookDescription").value;
+    const image = document.getElementById("bookImage").files[0];
+  
+    if (!name) {
+      UI.showToast("Book name is required", "danger");
+      return;
+    }
+  
+    let formData = new FormData();
+    formData.append("period", periodId);
+    formData.append("name", name);
+    formData.append("description", description);
+    if (image) formData.append("cover_image", image);
+  
+    UI.setLoading(button, editId ? "Updating..." : "Saving...");
+  
+    fetch(BOOK_API + (editId ? editId + "/" : ""), {
+      method: editId ? "PUT" : "POST",
+      headers: {
+        "Authorization": "Bearer " + token
+      },
+      body: formData
+    })
+    .then(res => {
+      if (!res.ok) {
+        throw new Error("Unauthorized or invalid data");
+      }
+      return res.json();
+    })
+    .then(() => {
+      UI.showToast(
+        editId ? "Book updated successfully" : "Book created successfully",
+        "success"
+      );
+  
+      closeForm();
+      document.getElementById("bookName").value = "";
+      document.getElementById("bookDescription").value = "";
+      document.getElementById("bookImage").value = "";
+      editId = null;
+  
+      loadBooks();
+    })
+    .catch(err => {
+      UI.showToast(err.message, "danger");
+    })
+    .finally(() => {
+      UI.clearLoading(button);
+    });
+  }
+  
+
+/* ---------------- EDIT ---------------- */
+function editBook(id, name, description) {
+  editId = id;
+  openForm();
+  document.getElementById("formTitle").innerText = "Edit Book";
+  document.getElementById("bookName").value = name;
+  document.getElementById("bookDescription").value = description;
+}
+
+/* ---------------- DELETE ---------------- */
+function deleteBook(id) {
+
+    if (!confirm("Delete this book?")) return;
+  
+    UI.showPageLoader();
+  
+    fetch(BOOK_API + id + "/", {
+      method: "DELETE",
+      headers: {
+        "Authorization": "Bearer " + token
+      }
+    })
+    .then(res => {
+      if (!res.ok) throw new Error("Delete failed");
+      UI.showToast("Book deleted successfully", "success");
+      loadBooks();
+    })
+    .catch(err => {
+      UI.showToast(err.message, "danger");
+    })
+    .finally(() => {
+      UI.hidePageLoader();
+    });
+  }
+  
+
+loadBooks();
+</script>
+
+{% endblock %}

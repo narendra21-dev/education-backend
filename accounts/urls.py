@@ -15,6 +15,7 @@ from .views import (
     VerifyOTPView,
     TestProtectedView,
     test_email,
+    MeView,
 )
 
 urlpatterns = [
@@ -34,4 +35,5 @@ urlpatterns = [
         name="resend-register-otp",
     ),
     path("test-email/", test_email),
+    path("me/", MeView.as_view(), name="me"),
 ]

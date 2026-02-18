@@ -1,0 +1,105 @@
+{% extends "website/base.html" %}
+{% block title %}Learn Smarter{% endblock %}
+
+{% block content %}
+
+<!-- HERO -->
+<section class="hero-section">
+  <div class="container">
+    <div class="row align-items-center min-vh-100">
+
+      <div class="col-md-7">
+        <h1 class="hero-title">
+          Learn Smarter.<br>
+          Not Harder.
+        </h1>
+
+        <p class="hero-subtitle">
+          Structured university content, notes, and questions —
+          all in one modern learning platform.
+        </p>
+
+        <div class="hero-actions">
+          <a href="{% url 'register' %}" class="btn btn-primary btn-lg">
+            Get Started
+          </a>
+          <a href="{% url 'universities' %}" class="btn btn-outline-light btn-lg ms-3">
+            Browse Universities
+          </a>
+        </div>
+      </div>
+
+      <div class="col-md-5 d-none d-md-block">
+        <div class="hero-illustration"></div>
+      </div>
+
+    </div>
+  </div>
+</section>
+
+<!-- FEATURES -->
+<section class="features-section">
+  <div class="container">
+    <h2 class="section-title text-center">
+      Everything You Need to Learn Better
+    </h2>
+
+    <div class="row mt-5 g-4">
+      <div class="col-md-3">
+        <div class="glass-card">
+          <h5>📚 Structured Content</h5>
+          <p>University → Course → Book → Unit → Chapter</p>
+        </div>
+      </div>
+
+      <div class="col-md-3">
+        <div class="glass-card">
+          <h5>🧠 Smart Notes</h5>
+          <p>Exam-focused explanations & questions</p>
+        </div>
+      </div>
+
+      <div class="col-md-3">
+        <div class="glass-card">
+          <h5>🔐 Secure Auth</h5>
+          <p>OTP-based login & password recovery</p>
+        </div>
+      </div>
+
+      <div class="col-md-3">
+        <div class="glass-card">
+          <h5>📱 App Ready</h5>
+          <p>Same APIs power web & mobile apps</p>
+        </div>
+      </div>
+    </div>
+  </div>
+</section>
+
+<!-- FLOW -->
+<section class="flow-section text-center">
+  <div class="container">
+    <h2 class="section-title">How Learning Works</h2>
+    <p class="flow-text">
+      University → Course → Book → Unit → Chapter → Notes & Questions
+    </p>
+  </div>
+</section>
+
+<!-- CTA -->
+<section class="cta-section text-center">
+  <div class="container">
+    <h2>Start Learning Today</h2>
+    <p>Join students who learn smarter, not harder.</p>
+    <a href="{% url 'register' %}" class="btn btn-primary btn-lg">
+      Create Free Account
+    </a>
+  </div>
+</section>
+
+<!-- FOOTER -->
+<footer class="footer text-center">
+  <p>© {{ year|default:"2026" }} EduPlatform. All rights reserved.</p>
+</footer>
+
+{% endblock %}

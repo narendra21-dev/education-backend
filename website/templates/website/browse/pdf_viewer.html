@@ -1,0 +1,400 @@
+<!DOCTYPE html>
+
+<html>
+
+<head>
+
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+
+<title>Ultimate PDF Viewer</title>
+
+<script src="https://cdnjs.cloudflare.com/ajax/libs/pdf.js/3.11.174/pdf.min.js"></script>
+
+<style>
+
+body{
+margin:0;
+background:#020617;
+color:white;
+font-family:system-ui;
+display:flex;
+height:100vh;
+overflow:hidden;
+}
+
+/* SIDEBAR */
+
+#sidebar{
+width:220px;
+background:#020617;
+overflow:auto;
+border-right:1px solid #1e293b;
+}
+
+.thumb{
+width:100%;
+cursor:pointer;
+margin-bottom:10px;
+border:2px solid transparent;
+}
+
+.thumb.active{
+border:2px solid #2563eb;
+}
+
+/* MAIN */
+
+#main{
+flex:1;
+display:flex;
+flex-direction:column;
+}
+
+#toolbar{
+
+background:#020617;
+padding:10px;
+display:flex;
+gap:10px;
+align-items:center;
+border-bottom:1px solid #1e293b;
+}
+
+button,input{
+
+background:#0f172a;
+border:1px solid #1e293b;
+color:white;
+padding:6px 10px;
+border-radius:6px;
+}
+
+button:hover{
+background:#1e293b;
+cursor:pointer;
+}
+
+#viewer{
+
+flex:1;
+overflow:auto;
+text-align:center;
+}
+
+canvas{
+margin:10px auto;
+display:block;
+}
+
+/* LOADING */
+
+#loading{
+
+position:absolute;
+top:50%;
+left:50%;
+transform:translate(-50%,-50%);
+}
+
+</style>
+
+</head>
+
+<body>
+
+<!-- SIDEBAR -->
+
+<div id="sidebar"></div>
+
+<!-- MAIN -->
+
+<div id="main">
+
+<div id="toolbar">
+
+<button onclick="prev()">◀</button>
+
+<span id="pageInfo"></span>
+
+<button onclick="next()">▶</button>
+
+<button onclick="zoomIn()">+</button>
+
+<button onclick="zoomOut()">-</button>
+
+<button onclick="toggleScroll()">Scroll Mode</button>
+
+<button onclick="bookmark()">⭐</button>
+
+<button onclick="fullscreen()">⛶</button>
+
+<button onclick="download()">Download</button>
+
+<input id="search"
+placeholder="Search page">
+
+<button onclick="searchPage()">Search</button>
+
+</div>
+
+<div id="viewer"></div>
+
+</div>
+
+<div id="loading">
+
+Loading PDF...
+
+</div>
+
+<script>
+
+const url="{{ pdf_url }}"
+
+let pdf=null
+
+let scale=1.2
+
+let pageNum=1
+
+let scrollMode=false
+
+let bookmarks=[]
+
+const viewer=document.getElementById("viewer")
+
+const sidebar=document.getElementById("sidebar")
+
+
+
+pdfjsLib.getDocument(url).promise.then(doc=>{
+
+pdf=doc
+
+createThumbs()
+
+render()
+
+loading.style.display="none"
+
+})
+
+
+function render(){
+
+viewer.innerHTML=""
+
+if(scrollMode){
+
+for(let i=1;i<=pdf.numPages;i++){
+
+renderPage(i)
+
+}
+
+}else{
+
+renderPage(pageNum)
+
+}
+
+pageInfo.innerText=
+
+pageNum+" / "+pdf.numPages
+
+}
+
+
+function renderPage(num){
+
+pdf.getPage(num).then(page=>{
+
+const canvas=document.createElement("canvas")
+
+const ctx=canvas.getContext("2d")
+
+const viewport=page.getViewport({scale})
+
+canvas.height=viewport.height
+
+canvas.width=viewport.width
+
+page.render({
+
+canvasContext:ctx,
+viewport
+
+})
+
+viewer.appendChild(canvas)
+
+})
+
+}
+
+
+function next(){
+
+if(pageNum<pdf.numPages){
+
+pageNum++
+render()
+
+}
+
+}
+
+
+function prev(){
+
+if(pageNum>1){
+
+pageNum--
+render()
+
+}
+
+}
+
+
+function zoomIn(){
+
+scale+=0.2
+render()
+
+}
+
+
+function zoomOut(){
+
+scale-=0.2
+render()
+
+}
+
+
+function toggleScroll(){
+
+scrollMode=!scrollMode
+
+render()
+
+}
+
+
+function download(){
+
+window.open(url)
+
+}
+
+
+function fullscreen(){
+
+document.documentElement.requestFullscreen()
+
+}
+
+
+function bookmark(){
+
+bookmarks.push(pageNum)
+
+alert("Bookmarked page "+pageNum)
+
+}
+
+
+function searchPage(){
+
+const s=Number(search.value)
+
+if(s>=1 && s<=pdf.numPages){
+
+pageNum=s
+render()
+
+}
+
+}
+
+
+function createThumbs(){
+
+for(let i=1;i<=pdf.numPages;i++){
+
+pdf.getPage(i).then(page=>{
+
+const canvas=document.createElement("canvas")
+
+const ctx=canvas.getContext("2d")
+
+const viewport=page.getViewport({scale:0.3})
+
+canvas.height=viewport.height
+
+canvas.width=viewport.width
+
+canvas.className="thumb"
+
+canvas.onclick=()=>{
+
+pageNum=i
+render()
+
+}
+
+page.render({
+
+canvasContext:ctx,
+viewport
+
+})
+
+sidebar.appendChild(canvas)
+
+})
+
+}
+
+}
+
+
+
+/* KEYBOARD */
+
+document.addEventListener("keydown",e=>{
+
+if(e.key==="ArrowRight")
+next()
+
+if(e.key==="ArrowLeft")
+prev()
+
+})
+
+
+
+/* CTRL ZOOM */
+
+viewer.addEventListener("wheel",e=>{
+
+if(e.ctrlKey){
+
+e.preventDefault()
+
+if(e.deltaY<0)
+zoomIn()
+
+else
+zoomOut()
+
+}
+
+})
+
+</script>
+
+</body>
+
+</html>

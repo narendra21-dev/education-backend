@@ -1,0 +1,605 @@
+
+{% extends "website/base.html" %}
+
+{% block content %}
+<div class="container mt-5 pt-4">
+
+  <div class="d-flex justify-content-between align-items-center mb-4">
+    <h2 class="fw-bold">Universities</h2>
+
+    <!-- Admin only -->
+    <button id="addUniversityBtn"
+            class="btn btn-primary d-none">
+      ➕ Add University
+    </button>
+  </div>
+
+  <!-- Search -->
+<div class="row mb-3">
+  <div class="col-md-6">
+    <input type="text" id="searchInput" class="form-control" placeholder="Search universities...">
+  </div>
+</div>
+
+<!-- Toast -->
+<div class="position-fixed top-0 end-0 p-3" style="z-index: 9999">
+  <div id="successToast" class="toast align-items-center text-bg-success border-0">
+    <div class="d-flex">
+      <div class="toast-body" id="toastMessage">
+        Success!
+      </div>
+      <button type="button" class="btn-close btn-close-white me-2 m-auto" data-bs-dismiss="toast"></button>
+    </div>
+  </div>
+</div>
+
+  <!-- Loader -->
+  <div id="universitiesLoader" class="text-center my-5">
+    <div class="spinner-border text-primary"></div>
+  </div>
+
+  <!-- Error -->
+  <div id="universitiesError"
+       class="alert alert-danger d-none"></div>
+
+  <!-- List -->
+  <div id="universitiesGrid"
+       class="row g-4 d-none"></div>
+
+</div>
+
+  
+<!-- Pagination -->
+<nav class="mt-4">
+  <ul class="pagination justify-content-center" id="pagination"></ul>
+</nav>
+
+<!-- Image Preview -->
+<img id="imagePreview" class="img-fluid rounded mt-2 d-none" style="height:150px; object-fit:cover;">
+
+
+<!-- Add / Edit Modal -->
+<div class="modal fade" id="universityModal" tabindex="-1">
+  <div class="modal-dialog">
+    <div class="modal-content p-4">
+
+      <h5 id="modalTitle">Add University</h5>
+
+      <input id="uniName"
+             class="form-control my-2"
+             placeholder="University name">
+
+      <textarea id="uniDesc"
+                class="form-control my-2"
+                placeholder="Description"></textarea>
+      {% comment %} <input id="uniImage"
+       type="file"
+       class="form-control my-2"
+       accept="image/*"> {% endcomment %}
+       <input type="file" id="uniImage" accept="image/*" />
+
+
+      <div class="text-end mt-3">
+        <button class="btn btn-secondary"
+                data-bs-dismiss="modal">
+          Cancel
+        </button>
+        <button id="saveUniversityBtn"
+                class="btn btn-primary">
+          Save
+        </button>
+      </div>
+
+    </div>
+  </div>
+</div>
+
+<script>
+  (function () {
+  
+    if (!window.location.pathname.includes("universities")) return;
+  
+    //const API_BASE = "http://127.0.0.1:8000/api/universities/";
+    const API_BASE = "https://education-backend-2-qmvp.onrender.com/api/universities/";
+    const token = localStorage.getItem("access_token");
+  
+    if (!token) {
+      window.location.href = "/login/";
+      return;
+    }
+  
+   // const payload = JSON.parse(atob(token.split(".")[1]));
+    //const isAdmin = payload.is_staff === true;
+    const isAdmin = localStorage.getItem("is_admin");
+  
+    // ===== UI ELEMENTS =====
+    const grid = document.getElementById("universitiesGrid");
+    const loader = document.getElementById("universitiesLoader");
+    const errorBox = document.getElementById("universitiesError");
+    const addBtn = document.getElementById("addUniversityBtn");
+    const searchInput = document.getElementById("searchInput");
+    const pagination = document.getElementById("pagination");
+    const modalElement = document.getElementById("universityModal");
+  const modal = new bootstrap.Modal(modalElement);
+    //const modal = new bootstrap.Modal(document.getElementById("universityModal"));
+    const toast = new bootstrap.Toast(document.getElementById("successToast"));
+  
+    const uniName = document.getElementById("uniName");
+    const uniDesc = document.getElementById("uniDesc");
+    const uniImage = document.getElementById("uniImage");
+    const imagePreview = document.getElementById("imagePreview");
+    const saveBtn = document.getElementById("saveUniversityBtn");
+  
+    let editingId = null;
+    let currentPage = 1;
+    let currentSearch = "";
+    let searchTimeout = null;
+  
+if (isAdmin == true || isAdmin === "true") {
+    addBtn.classList.remove("d-none");
+
+    addBtn.addEventListener("click", () => {
+        editingId = null;                 // reset edit mode
+        uniName.value = "";
+        uniDesc.value = "";
+        uniImage.value = "";
+        imagePreview.classList.add("d-none");
+        modal.show();
+    });
+}
+  
+    // =========================
+    // TOAST
+    // =========================
+    function showToast(message) {
+      document.getElementById("toastMessage").textContent = message;
+      toast.show();
+    }
+  
+    // =========================
+    // IMAGE PREVIEW
+    // =========================
+    uniImage.addEventListener("change", () => {
+      const file = uniImage.files[0];
+      if (!file) return;
+  
+      const reader = new FileReader();
+      reader.onload = e => {
+        imagePreview.src = e.target.result;
+        imagePreview.classList.remove("d-none");
+      };
+      reader.readAsDataURL(file);
+    });
+  
+    // =========================
+    // LOAD UNIVERSITIES
+    // =========================
+    async function loadUniversities(page = 1, search = "") {
+  
+      loader.classList.remove("d-none");
+      grid.classList.add("d-none");
+      grid.innerHTML = "";
+  
+      try {
+        const res = await fetch(
+          `${API_BASE}?page=${page}&search=${search}`,
+          { headers: { Authorization: `Bearer ${token}` } }
+        );
+  
+        const data = await res.json();
+  
+        renderUniversities(data.results);
+        renderPagination(data);
+  
+        loader.classList.add("d-none");
+        grid.classList.remove("d-none");
+  
+      } catch (err) {
+        loader.classList.add("d-none");
+        errorBox.classList.remove("d-none");
+        errorBox.textContent = "Failed to load data.";
+      }
+    }
+  
+    // =========================
+    // RENDER UNIVERSITIES
+    // =========================
+    function renderUniversities(universities) {
+
+      if (!universities.length) {
+        grid.innerHTML = `
+          <div class="col-12 text-center text-muted">
+            No universities found.
+          </div>
+        `;
+        return;
+      }
+    
+      grid.innerHTML = "";
+    
+      universities.forEach(uni => {
+    
+        const adminButtons = isAdmin == true || isAdmin === "true" ? `
+          <div class="mt-3 d-flex gap-2">
+            <button class="btn btn-sm btn-outline-primary"
+              onclick="event.stopPropagation(); UniversityApp.edit(${uni.id}, \`${uni.name}\`, \`${uni.description || ""}\`)">
+              Edit
+            </button>
+            <button class="btn btn-sm btn-outline-danger"
+              onclick="event.stopPropagation(); UniversityApp.delete(${uni.id})">
+              Delete
+            </button>
+          </div>
+        ` : "";
+    
+        grid.innerHTML += `
+          <div class="col-md-4">
+            <div class="card p-3 h-100 browse-card"
+                 style="cursor:pointer"
+                 onclick="UniversityApp.goToCourses(${uni.id})">
+    
+              ${
+                uni.image_url
+                  ? `<img src="${uni.image_url}" class="img-fluid rounded mb-2 d-block mx-auto "
+                     style="height:150px; object-fit:cover;">`
+                  : ""
+              }
+    
+              <h5>${uni.name}</h5>
+              <p class="small auth-subtitle">${uni.description || ""}</p>
+    
+              ${adminButtons}
+    
+            </div>
+          </div>
+        `;
+      });
+    }
+    
+    // =========================
+    // PAGINATION
+    // =========================
+    function renderPagination(data) {
+  
+      pagination.innerHTML = "";
+  
+      const totalPages = Math.ceil(data.count / 10);
+
+      
+  
+      for (let i = 1; i <= totalPages; i++) {
+        pagination.innerHTML += `
+          <li class="page-item ${i === currentPage ? "active" : ""}">
+            <a class="page-link" href="#" onclick="UniversityApp.goToPage(${i})">${i}</a>
+          </li>
+        `;
+      }
+    }
+  
+    // =========================
+    // SEARCH
+    // =========================
+ 
+    searchInput.addEventListener("input", (e) => {
+     clearTimeout(searchTimeout);
+
+     searchTimeout = setTimeout(() => {
+       currentSearch = e.target.value.trim();
+       currentPage = 1;
+       loadUniversities(currentPage, currentSearch);
+     }, 400);  // 400ms delay
+    });
+  
+    // =========================
+    // SAVE (ADD / EDIT)
+    // =========================
+    saveBtn.addEventListener("click", async () => {
+      UI.setLoading(saveBtn, "Saving...");
+  
+      if (!isAdmin) return alert("Not allowed");
+  
+      const formData = new FormData();
+      formData.append("name", uniName.value);
+      formData.append("description", uniDesc.value);
+  
+      if (uniImage.files[0]) {
+        formData.append("image", uniImage.files[0]);
+      }
+  
+      let url = API_BASE;
+      let method = "POST";
+  
+      if (editingId) {
+        url += `${editingId}/`;
+        method = "PUT";
+      }
+  
+      const res = await fetch(url, {
+        method,
+        headers: { Authorization: `Bearer ${token}` },
+        body: formData
+      });
+  
+      if (res.ok) {
+        modal.hide();
+        showToast("University saved successfully!");
+        loadUniversities(currentPage, currentSearch);
+      }else {
+        UI.showToast("Something went wrong", "danger");
+      }
+      UI.clearLoading(btn);
+    });
+  
+    // =========================
+    // PUBLIC METHODS
+    // =========================
+    window.UniversityApp = {
+      goToCourses(id) {
+        window.location.href = `/courses/?university=${id}`;
+      },
+  
+      edit(id, name, desc) {
+        if (!isAdmin) return;
+  
+        editingId = id;
+        uniName.value = name;
+        uniDesc.value = desc;
+        uniImage.value = "";
+        imagePreview.classList.add("d-none");
+        modal.show();
+      },
+  
+      async delete(id) {
+        if (!isAdmin) return alert("Not allowed");
+  
+        if (!confirm("Delete this university?")) return;
+
+        UI.showPageLoader();
+  
+        await fetch(`${API_BASE}${id}/`, {
+          method: "DELETE",
+          headers: { Authorization: `Bearer ${token}` }
+        });
+        UI.hidePageLoader();
+        UI.showToast("University deleted", "warning");
+        showToast("Deleted successfully!");
+        loadUniversities(currentPage, currentSearch);
+      },
+  
+      goToPage(page) {
+        currentPage = page;
+        loadUniversities(currentPage, currentSearch);
+      }
+    };
+  
+    loadUniversities();
+  
+  })();
+  </script>
+  
+
+{% endblock %}
+
+
+
+
+{% comment %} {% extends "website/base.html" %}
+
+{% block content %}
+<div class="container mt-5 pt-4">
+
+  <div class="d-flex justify-content-between align-items-center mb-4">
+    <h2 class="fw-bold">Universities</h2>
+
+    <!-- Admin only -->
+    <button id="addUniversityBtn"
+            class="primary-btn d-none">
+      ➕ Add University
+    </button>
+  </div>
+
+  <!-- Loader -->
+  <div id="universitiesLoader" class="text-center my-5">
+    <div class="spinner-border text-primary"></div>
+  </div>
+
+  <!-- Error -->
+  <div id="universitiesError"
+       class="alert alert-danger d-none"></div>
+
+  <!-- List -->
+  <div id="universitiesGrid"
+       class="row g-4 d-none">
+  </div>
+
+</div>
+
+<!-- Add / Edit Modal -->
+<div class="modal fade" id="universityModal" tabindex="-1">
+  <div class="modal-dialog">
+    <div class="modal-content glass-card p-4">
+
+      <h5 id="modalTitle">Add University</h5>
+
+      <input id="uniName"
+             class="form-control my-2"
+             placeholder="University name">
+
+      <textarea id="uniDesc"
+                class="form-control my-2"
+                placeholder="Description"></textarea>
+
+      <div class="text-end mt-3">
+        <button class="btn btn-secondary"
+                data-bs-dismiss="modal">
+          Cancel
+        </button>
+        <button id="saveUniversityBtn"
+                class="btn btn-primary">
+          Save
+        </button>
+      </div>
+
+    </div>
+  </div>
+</div>
+
+<script>
+  (function () {
+    if (!window.location.pathname.includes("universities")) return;
+  
+    const token = localStorage.getItem("access_token");
+
+
+    console.log("token :__"+JSON.stringify(token))
+    if (!token) {
+      window.location.href = "/login/";
+      return;
+    }
+  
+    const API_BASE_URL = "http://127.0.0.1:8000/api";
+  
+    const loader = document.getElementById("universitiesLoader");
+    const grid = document.getElementById("universitiesGrid");
+    const errorBox = document.getElementById("universitiesError");
+    const addBtn = document.getElementById("addUniversityBtn");
+    const is_admin = localStorage.getItem('is_admin');
+    console.log("is_admin :__"+JSON.stringify(is_admin))
+    console.log("is_admin 1 :__"+is_admin)
+  
+    function initUniversities() {
+      fetch(`${API_BASE_URL}/universities/`, {
+        headers: {
+          Authorization: `Bearer ${token}`
+        }
+      })
+      .then(res => res.json())
+      .then(data => {
+        loader.classList.add("d-none");
+        grid.classList.remove("d-none");
+
+        
+        console.log("is_admin :__"+JSON.stringify(is_admin))
+  
+        const payload1 = JSON.parse(atob(token.split(".")[1]));
+        const payload = true;
+        console.log("payload :__"+JSON.stringify(payload))
+        if (true) {
+          addBtn.classList.remove("d-none");
+        }
+  
+        data.results.forEach(uni => {
+          grid.innerHTML += `
+            <div class="col-md-4">
+              <div class="card glass-card p-3 h-100">
+                <h5>${uni.name}</h5>
+                <p class="small text-muted">
+                  ${uni.id || "No description"}
+                </p>
+  
+                ${
+                  true
+                    ? `
+                      <div class="mt-auto d-flex gap-2">
+                        <button class="btn btn-sm btn-outline-primary"
+                          onclick="editUniversity(${uni.id})">Edit</button>
+                        <button class="btn btn-sm btn-outline-danger"
+                          onclick="deleteUniversity(${uni.id})">Delete</button>
+                      </div>
+                    `
+                    : ""
+                }
+              </div>
+            </div>
+          `;
+        });
+      })
+      .catch(() => {
+        loader.classList.add("d-none");
+        errorBox.classList.remove("d-none");
+        errorBox.textContent = "Failed to load universities";
+      });
+    }
+  
+    addBtn.addEventListener("click", () => {
+      document.getElementById("modalTitle").textContent = "Add University";
+      document.getElementById("uniName").value = "";
+      document.getElementById("uniDesc").value = "";
+      new bootstrap.Modal("#universityModal").show();
+    });
+  
+    initUniversities();
+  })();
+  </script>
+  
+{% endblock %} {% endcomment %}
+
+
+{% comment %} 
+
+{% extends "website/base.html" %}
+{% block title %}Universities{% endblock %}
+
+{% block content %}
+<section class="browse-section">
+  <div class="container">
+    <h1 class="browse-title">Universities</h1>
+    <p class="browse-subtitle">
+      Choose your university to start learning
+    </p>
+
+    <div class="row g-4 mt-4">
+
+      <!-- University Card -->
+      <div class="col-md-4">
+        <a href="{% url 'courses' %}" class="browse-card">
+          <h5>Delhi University</h5>
+          <p>BCA • BSc • BA</p>
+        </a>
+      </div>
+
+      <div class="col-md-4">
+        <a href="{% url 'courses' %}" class="browse-card">
+          <h5>Mumbai University</h5>
+          <p>BCA • BTech • MCA</p>
+        </a>
+      </div>
+
+      <div class="col-md-4">
+        <a href="{% url 'courses' %}" class="browse-card">
+          <h5>Pune University</h5>
+          <p>BSc • MSc • MCA</p>
+        </a>
+      </div>
+
+    </div>
+  </div>
+</section>
+{% endblock %} {% endcomment %}
+
+
+{% comment %} {% extends 'website/base.html' %}
+{% block content %}
+
+<h4>Universities</h4>
+<div class="row g-4" id="list"></div>
+
+<script>
+fetch("/api/universities/")
+.then(r=>r.json())
+.then(data=>{
+let html=""
+data.forEach(u=>{
+html+=`
+<div class="col-md-3">
+ <a href="/courses/${u.id}/">
+  <div class="edu-card">${u.name}</div>
+ </a>
+</div>
+`
+})
+document.getElementById("list").innerHTML=html
+})
+</script>
+
+{% endblock %} {% endcomment %}
