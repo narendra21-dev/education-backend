@@ -122,7 +122,7 @@ class BookViewSet(ModelViewSet):
         "period", "period__course", "period__course__university"
     ).prefetch_related("units__chapters__notes", "units__chapters__questions")
     serializer_class = BookSerializer
-    # permission_classes = [IsAuthenticated, IsTeacherOrReadOnly]
+    permission_classes = [IsAuthenticated, IsTeacherOrReadOnly]
     # permission_classes = [IsAuthenticated]
     # filterset_fields = ["course"]
     filterset_fields = ["period", "period__course"]
