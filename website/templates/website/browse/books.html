@@ -8,9 +8,15 @@
       <p class="browse-subtitle">Browse all books for this period</p>
     </div>
 
-    {% if request.user.is_staff %}
+    {% comment %} {% if request.user.is_staff %}
     <button class="primary-btn" onclick="openForm()">+ Add Book</button>
-    {% endif %}
+    {% endif %} {% endcomment %}
+    <button id="addBookBtn"
+        class="primary-btn"
+        style="display:none;"
+        onclick="openForm()">
+  + Add Book
+</button>
   </div>
 
   <!-- ADMIN FORM -->
@@ -48,6 +54,11 @@ const periodId = "{{period_id}}";
 const API_URL = `https://education-backend-2-qmvp.onrender.com/api/books/?period=${periodId}`;
 const BOOK_API = `https://education-backend-2-qmvp.onrender.com/api/books/`;
 
+
+if (isAdmin === "true" || isAdmin == true) {
+  console.log("Admin user detected, showing add button ___: " +isAdmin);
+  document.getElementById("addBookBtn").style.display = "inline-block";
+}
 
 
 let editId = null;

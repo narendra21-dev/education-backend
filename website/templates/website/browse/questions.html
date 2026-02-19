@@ -434,7 +434,7 @@ JSON.parse(atob(token.split('.')[1]))
 
 
 
-if(isAdmin){
+if(isAdmin == true || isAdmin === "true"){
 
 addBtn.classList.remove("d-none")
 
@@ -505,7 +505,7 @@ ${q.answer}
 
 
 
-${isAdmin ? `
+${isAdmin == true || isAdmin === "true" ? `
 
 
 <div class="action-buttons">
