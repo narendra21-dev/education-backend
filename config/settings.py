@@ -221,8 +221,8 @@ cloudinary.config(
 )
 # print("CLOUD NAME =>", config("CLOUDINARY_CLOUD_NAME"))
 
-# MEDIA_URL = "/media/"
-# MEDIA_ROOT = os.path.join(BASE_DIR, "media")
+MEDIA_URL = "/media/"
+MEDIA_ROOT = os.path.join(BASE_DIR, "media")
 
 TEMPLATES[0]["DIRS"] = [BASE_DIR / "templates"]
 # STATICFILES_DIRS = [BASE_DIR / "static"]

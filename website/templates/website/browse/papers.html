@@ -473,21 +473,34 @@ data.results.forEach(p=>{
     <div class="paper-actions" style="display:flex; gap:10px;">
     
     
-    <a href="/papers/${p.id}/preview/"
+    {% comment %} <a href="/papers/${p.id}/preview/"
     class="chapter-btn">
     
     Preview
     
-    </a>
+    </a> {% endcomment %}
+
+    <a href="https://education-backend-2-qmvp.onrender.com/papers/${p.id}/preview/"
+target="_blank"
+class="chapter-btn">
+Preview1
+</a>
     
     
-    <a href="${p.pdf}"
+    {% comment %} <a href="${p.pdf}"
     download
     class="chapter-btn download-btn">
     
     Download
     
-    </a>
+    </a> {% endcomment %}
+
+    <a href="https://education-backend-2-qmvp.onrender.com${p.pdf}"
+target="_blank"
+download
+class="chapter-btn download-btn">
+Download
+</a>
     
     
     ${isAdmin==="true" ? `
@@ -541,7 +554,7 @@ form.append("title",titleInput.value)
 form.append("pdf",fileInput.files[0])
 
 form.append("chapter",chapterId)
-https://education-backend-2-qmvp.onrender.com
+//https://education-backend-2-qmvp.onrender.com
 
 //fetch("/api/papers/",{
 fetch("https://education-backend-2-qmvp.onrender.com/api/papers/",{

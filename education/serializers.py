@@ -225,11 +225,38 @@ class QuestionNestedSerializer(serializers.ModelSerializer):
         fields = ["id", "question", "answer"]
 
 
+# class PaperSerializer(serializers.ModelSerializer):
+#     class Meta:
+#         model = Paper
+
+
+#         fields = "__all__"
+# class PaperSerializer(serializers.ModelSerializer):
+#     pdf = serializers.SerializerMethodField()
+
+#     class Meta:
+#         model = Paper
+
+#         fields = "__all__"
+
+#     def get_pdf(self, obj):
+#         request = self.context.get("request")
+
+#         if obj.pdf:
+#             return request.build_absolute_uri(obj.pdf.url)
+
+#         return None
+
+
 class PaperSerializer(serializers.ModelSerializer):
+    pdf = serializers.FileField(required=True)
+
     class Meta:
         model = Paper
 
-        fields = "__all__"
+        fields = ["id", "title", "pdf", "chapter", "created_at"]
+
+        read_only_fields = ["id", "created_at"]
 
 
 class ChapterNestedSerializer(serializers.ModelSerializer):
