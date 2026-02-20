@@ -416,24 +416,39 @@ class QuestionViewSet(ModelViewSet):
 #         return Paper.objects.all()
 
 
+# class PaperViewSet(ModelViewSet):
+#     queryset = Paper.objects.select_related("chapter").all()
+
+#     serializer_class = PaperSerializer
+
+#     permission_classes = [IsAuthenticated, IsTeacherOrReadOnly]
+
+#     parser_classes = [MultiPartParser, FormParser]
+
+#     filterset_fields = ["chapter"]
+
+#     def get_queryset(self):
+#         chapter = self.request.query_params.get("chapter")
+
+#         if chapter:
+#             return self.queryset.filter(chapter=chapter)
+
+#         return self.queryset
+
+
 class PaperViewSet(ModelViewSet):
-    queryset = Paper.objects.select_related("chapter").all()
+    queryset = Paper.objects.select_related("chapter")
 
     serializer_class = PaperSerializer
 
-    permission_classes = [IsAuthenticated, IsTeacherOrReadOnly]
+    permission_classes = [IsAuthenticated]
 
     parser_classes = [MultiPartParser, FormParser]
 
     filterset_fields = ["chapter"]
 
-    def get_queryset(self):
-        chapter = self.request.query_params.get("chapter")
-
-        if chapter:
-            return self.queryset.filter(chapter=chapter)
-
-        return self.queryset
+    def perform_create(self, serializer):
+        serializer.save()
 
 
 def test_static_media(request):

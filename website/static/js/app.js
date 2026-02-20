@@ -10,7 +10,7 @@ const navbar = document.querySelector(".glass-nav");
 // const API_BASE_URL1 = "http://127.0.0.1:8000/api";
 // const API_BASE_URL = "http://127.0.0.1:8000/api";
 
-const API_BASE_URL = "https://education-backend-2-qmvp.onrender.com/api";
+ const API_BASE_URL = "https://education-backend-2-qmvp.onrender.com/api";
 // const API_BASE_URL1 = "http://127.0.0.1:8000/api";
 // const API_BASE_URL = window.location.origin + "/api";
 

@@ -33,6 +33,7 @@ urlpatterns = [
     path("papers/", views.papers_page, name="papers-page"),
     # path("papers/<id>/preview/", views.pdf_preview),
     path("papers/<int:paper_id>/preview/", views.pdf_preview, name="paper_preview"),
+    # path("papers/view/<int:pk>/", views.paper_preview, name="paper_preview"),
     path("notes/", views.notes_page, name="notes-page"),
     path("note_detail/", views.note_detail, name="note_detail"),
     # path("delete-image/<int:id>/",DeleteImageView.as_view()),

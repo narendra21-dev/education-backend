@@ -447,6 +447,8 @@ let html=""
 
 data.results.forEach(p=>{
 
+    console.log("paper :___" + JSON.stringify(p))
+
 
     html+=`
 
@@ -473,34 +475,21 @@ data.results.forEach(p=>{
     <div class="paper-actions" style="display:flex; gap:10px;">
     
     
-    {% comment %} <a href="/papers/${p.id}/preview/"
+ <a href="/papers/${p.id}/preview/"
     class="chapter-btn">
     
     Preview
     
-    </a> {% endcomment %}
-
-    <a href="https://education-backend-2-qmvp.onrender.com/papers/${p.id}/preview/"
-target="_blank"
-class="chapter-btn">
-Preview1
-</a>
+    </a> 
     
     
-    {% comment %} <a href="${p.pdf}"
+ <a href="${p.pdf}"
     download
     class="chapter-btn download-btn">
     
     Download
     
-    </a> {% endcomment %}
-
-    <a href="https://education-backend-2-qmvp.onrender.com${p.pdf}"
-target="_blank"
-download
-class="chapter-btn download-btn">
-Download
-</a>
+    </a> 
     
     
     ${isAdmin==="true" ? `

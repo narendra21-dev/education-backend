@@ -1,6 +1,7 @@
 from django.conf import settings
 from django.db import models
 from cloudinary.models import CloudinaryField
+from cloudinary_storage.storage import RawMediaCloudinaryStorage
 
 
 # Create your models here.
@@ -200,7 +201,10 @@ class Paper(models.Model):
 
     title = models.CharField(max_length=255)
 
-    pdf = models.FileField(upload_to="papers/")
+    # pdf = models.FileField(upload_to="papers/")
+
+    pdf = models.FileField(upload_to="papers/", storage=RawMediaCloudinaryStorage())
+
 
     created_at = models.DateTimeField(auto_now_add=True)
 

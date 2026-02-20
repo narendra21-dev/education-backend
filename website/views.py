@@ -1,5 +1,5 @@
 from pyexpat.errors import messages
-from django.shortcuts import redirect, render
+from django.shortcuts import get_object_or_404, redirect, render
 import requests
 from django.conf import settings
 from django.contrib.auth.decorators import login_required
@@ -174,9 +174,21 @@ def papers_page(request):
 
 
 def pdf_preview(request, paper_id):
-    paper = Paper.objects.get(id=paper_id)
+    # paper = Paper.objects.get(id=paper_id)
+
+    paper = get_object_or_404(Paper, id=paper_id)
 
     return render(request, "website/browse/pdf_viewer.html", {"pdf_url": paper.pdf.url})
+
+
+# def paper_preview(request, pk):
+#     paper = get_object_or_404(Paper, pk=pk)
+
+#     return render(
+#         request,
+#         "website/browse/pdf_viewer.html",
+#         {"pdf_url": paper.pdf.url, "title": paper.title},
+#     )
 
 
 def notes_page(request):

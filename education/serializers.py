@@ -249,14 +249,16 @@ class QuestionNestedSerializer(serializers.ModelSerializer):
 
 
 class PaperSerializer(serializers.ModelSerializer):
-    pdf = serializers.FileField(required=True)
+    pdf_url = serializers.SerializerMethodField()
 
     class Meta:
         model = Paper
+        fields = "__all__"
 
-        fields = ["id", "title", "pdf", "chapter", "created_at"]
-
-        read_only_fields = ["id", "created_at"]
+    def get_pdf_url(self, obj):
+        if obj.pdf:
+            return obj.pdf.url
+        return None
 
 
 class ChapterNestedSerializer(serializers.ModelSerializer):
